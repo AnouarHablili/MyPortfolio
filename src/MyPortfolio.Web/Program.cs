@@ -124,10 +124,14 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found");
 
-// WebSocket support for Blazor Server
+// WebSocket support for Blazor Server SignalR
 app.UseWebSockets();
 
-app.UseHttpsRedirection();
+// Only use HTTPS redirection in development - Fly.io handles HTTPS at the edge
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Add response caching
 app.UseResponseCaching();
