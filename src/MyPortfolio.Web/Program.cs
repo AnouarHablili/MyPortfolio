@@ -49,14 +49,19 @@ if (accessCodeOptions != null)
 }
 
 // Register HttpClient for server-side services
-builder.Services.AddHttpClient("LocalApi", client =>
+builder.Services.AddHttpClient("LocalApi", (sp, client) =>
 {
-    // This will be the base address for calling our own API endpoints
-    var baseUrl = builder.Configuration["BaseUrl"] ?? 
-                  (builder.Environment.IsDevelopment() 
-                      ? "https://localhost:7024/" 
-                      : builder.Configuration["ASPNETCORE_URLS"]?.Split(';').FirstOrDefault() ?? "https://localhost:7024/");
-    client.BaseAddress = new Uri(baseUrl);
+    // For server-side Blazor, we can use relative URLs or determine the base URL from the request context
+    // In production, we'll use the app's own base URL
+    if (builder.Environment.IsDevelopment())
+    {
+        client.BaseAddress = new Uri("https://localhost:7024/");
+    }
+    else
+    {
+        // In production, use http://localhost:8080 since we're calling our own API from within the container
+        client.BaseAddress = new Uri("http://localhost:8080/");
+    }
 });
 
 // Register a factory-based HttpClient for AccessCodeService
