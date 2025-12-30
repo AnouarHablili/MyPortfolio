@@ -63,3 +63,4 @@ packages/
 
 # Secrets
 secrets.json
+/docs/FLYIO-DEPLOYMENT.md

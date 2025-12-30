@@ -21,6 +21,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyPortfolio.Core", "src\MyP
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2F493ED8-BB03-4A75-8A64-18E7BFFA0480}"
 	ProjectSection(SolutionItems) = preProject
+		docs\FLYIO-DEPLOYMENT.md = docs\FLYIO-DEPLOYMENT.md
 		TECHNICAL-DECISIONS-CONSOLIDATED.md = TECHNICAL-DECISIONS-CONSOLIDATED.md
 	EndProjectSection
 EndProject

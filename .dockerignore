@@ -1,0 +1,48 @@
+# Build artifacts
+bin/
+obj/
+out/
+publish/
+
+# IDE folders
+.vs/
+.vscode/
+.idea/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+
+# Test results
+TestResults/
+coverage/
+
+# Documentation files (not needed in container)
+*.md
+docs/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Local configuration (secrets handled via fly secrets)
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+.env
+.env.*
+
+# Test projects (not needed for production)
+tests/
+
+# MAUI project (not needed for web deployment)
+src/MyPortfolio.Maui/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
