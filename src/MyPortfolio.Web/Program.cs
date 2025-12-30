@@ -12,8 +12,17 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure forwarded headers for Fly.io proxy (needed for WebSocket support)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Add services to the container - Server-side only
 builder.Services.AddRazorComponents()
@@ -102,6 +111,9 @@ builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
+// Use forwarded headers (must be before other middleware)
+app.UseForwardedHeaders();
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -111,6 +123,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found");
+
+// WebSocket support for Blazor Server
+app.UseWebSockets();
+
 app.UseHttpsRedirection();
 
 // Add response caching

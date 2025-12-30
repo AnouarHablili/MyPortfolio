@@ -12,6 +12,7 @@ primary_region = 'iad'
 [env]
   ASPNETCORE_ENVIRONMENT = 'Production'
   ASPNETCORE_URLS = 'http://+:8080'
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED = 'true'
 
 [http_service]
   internal_port = 8080
@@ -37,4 +38,3 @@ primary_region = 'iad'
   memory = '256mb'
   cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 256
