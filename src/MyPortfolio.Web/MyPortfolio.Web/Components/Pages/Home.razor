@@ -1,0 +1,33 @@
+@page "/"
+@using MyPortfolio.Shared.Components.POC
+@using MyPortfolio.Shared.Services
+@inject POCService POCService
+
+<PageTitle>My Portfolio - POC Showcase</PageTitle>
+
+<div class="home-page">
+    <div class="hero-section text-center mb-5">
+        <h1 class="display-4 mb-3">
+            <i class="bi bi-code-slash"></i> POC Showcase
+        </h1>
+        <p class="lead text-muted">
+            Explore interactive Proof-of-Concept demonstrations built with .NET 10 and Blazor
+        </p>
+    </div>
+
+    <div class="poc-section">
+        <h2 class="mb-4">
+            <i class="bi bi-grid-3x3-gap"></i> Available POCs
+        </h2>
+        <POCGallery POCs="@_pocs" />
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<MyPortfolio.Shared.Models.POCMetadata> _pocs = Array.Empty<MyPortfolio.Shared.Models.POCMetadata>();
+
+    protected override void OnInitialized()
+    {
+        _pocs = POCService.GetActivePOCs();
+    }
+}

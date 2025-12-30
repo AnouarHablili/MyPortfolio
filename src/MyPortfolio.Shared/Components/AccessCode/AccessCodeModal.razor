@@ -1,0 +1,156 @@
+@namespace MyPortfolio.Shared.Components.AccessCode
+@using MyPortfolio.Shared.Services
+
+<div class="modal @(IsVisible ? "show" : "")" style="display: @(IsVisible ? "block" : "none"); z-index: 9999;" tabindex="-1">
+    <div class="modal-backdrop @(IsVisible ? "show" : "")" style="z-index: 9998; background-color: rgba(0,0,0,0.5);"></div>
+    <div class="modal-dialog modal-dialog-centered" style="z-index: 10000;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-unlock-fill"></i> Unlock Interactive Features
+                </h5>
+                <button type="button" class="btn-close" @onclick="OnCancel" disabled="@IsLoading"></button>
+            </div>
+
+            <div class="modal-body">
+                <p>Enter your access code to unlock interactive features in the POCs.</p>
+                <p class="text-muted small">
+                    <i class="bi bi-info-circle"></i> You can browse all content without an access code.
+                    The code only unlocks submit buttons and AI-powered features to prevent API cost abuse.
+                </p>
+
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-circle-fill"></i> @ErrorMessage
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label for="accessCode" class="form-label">Access Code</label>
+                    <input type="password"
+                           class="form-control"
+                           id="accessCode"
+                           @bind="AccessCode"
+                           @bind:event="oninput"
+                           @onkeypress="HandleKeyPress"
+                           placeholder="Enter your access code"
+                           disabled="@IsLoading"
+                           autocomplete="off" />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="OnCancel" disabled="@IsLoading">
+                    Cancel
+                </button>
+                <button type="button"
+                        class="btn btn-primary"
+                        @onclick="OnSubmit"
+                        @disabled="IsLoading || string.IsNullOrWhiteSpace(AccessCode)">
+                    @if (IsLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        <span>Verifying...</span>
+                    }
+                    else
+                    {
+                        <span><i class="bi bi-unlock"></i> Unlock</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnCodeSubmitted { get; set; }
+
+    [Parameter]
+    public EventCallback OnModalClosed { get; set; }
+
+    public bool IsLoading { get; set; }
+    public string? ErrorMessage { get; set; }
+    public string AccessCode { get; set; } = string.Empty;
+
+    private async Task OnSubmit()
+    {
+        await OnCodeSubmitted.InvokeAsync(AccessCode);
+    }
+
+    private async Task OnCancel()
+    {
+        AccessCode = string.Empty;
+        ErrorMessage = null;
+        await OnModalClosed.InvokeAsync();
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(AccessCode) && !IsLoading)
+        {
+            await OnSubmit();
+        }
+    }
+
+    public void SetError(string message)
+    {
+        ErrorMessage = message;
+    }
+
+    public void ClearError()
+    {
+        ErrorMessage = null;
+    }
+}
+
+<style>
+    .modal.show {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        outline: 0;
+    }
+
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .modal-dialog {
+        position: relative;
+        margin: 1.75rem auto;
+        pointer-events: none;
+        max-width: 500px;
+    }
+
+    .modal-content {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        pointer-events: auto;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid rgba(0,0,0,.2);
+        border-radius: 0.5rem;
+        outline: 0;
+    }
+
+    .modal-dialog-centered {
+        display: flex;
+        align-items: center;
+        min-height: calc(100% - 3.5rem);
+    }
+</style>

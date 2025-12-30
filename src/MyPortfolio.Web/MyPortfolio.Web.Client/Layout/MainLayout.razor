@@ -1,0 +1,94 @@
+﻿@inherits LayoutComponentBase
+@implements IDisposable
+@using MyPortfolio.Web.Client.Layout
+@using MyPortfolio.Shared.Services
+@using MyPortfolio.Shared.Components.AccessCode
+@inject AccessCodeService AccessCodeService
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="https://github.com/AnouarHablili/MyPortfolio" target="_blank">About</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+<AccessCodeModal 
+    IsVisible="@ShowAccessCodeModal" 
+    OnCodeSubmitted="@HandleAccessCodeSubmit"
+    OnModalClosed="@CloseAccessModal"
+    @ref="AccessCodeModalRef" />
+
+@code {
+    private AccessCodeModal? AccessCodeModalRef;
+    private bool ShowAccessCodeModal;
+
+    protected override void OnInitialized()
+    {
+        AccessCodeService.OnShowUnlockModal += ShowModal;
+    }
+
+    private void ShowModal()
+    {
+        ShowAccessCodeModal = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleAccessCodeSubmit(string code)
+    {
+        if (AccessCodeModalRef is null)
+            return;
+
+        AccessCodeModalRef.IsLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await AccessCodeService.ValidateAccessCodeAsync(code);
+
+            if (result.IsValid)
+            {
+                AccessCodeModalRef.IsLoading = false;
+                ShowAccessCodeModal = false;
+                StateHasChanged();
+            }
+            else
+            {
+                AccessCodeModalRef.SetError(result.ErrorMessage ?? "Invalid access code");
+                AccessCodeModalRef.IsLoading = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            AccessCodeModalRef.SetError($"An error occurred: {ex.Message}");
+            AccessCodeModalRef.IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseAccessModal()
+    {
+        ShowAccessCodeModal = false;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        AccessCodeService.OnShowUnlockModal -= ShowModal;
+    }
+}

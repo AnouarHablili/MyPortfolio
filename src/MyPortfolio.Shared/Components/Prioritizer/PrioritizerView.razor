@@ -1,0 +1,230 @@
+@namespace MyPortfolio.Shared.Components.Prioritizer
+@using MyPortfolio.Shared.ViewModels
+@using MyPortfolio.Shared.Components.Common
+@using MyPortfolio.Core.Features.Prioritizer.Models
+@using MyPortfolio.Shared.Services
+@using Microsoft.JSInterop
+@implements IDisposable
+@inject PrioritizerViewModel ViewModel
+@inject AccessCodeService AccessCodeService
+@inject ExportService ExportService
+@inject IJSRuntime JSRuntime
+
+<div class="prioritizer-view">
+    <div class="prioritizer-header">
+        <h1>
+            <i class="bi bi-robot"></i> AI Task Prioritizer
+        </h1>
+        <p class="lead">
+            Powered by Google Gemini 2.5 Flash - Enter a high-level goal and get intelligent task breakdown
+        </p>
+        @if (!AccessCodeService.HasValidAccess())
+        {
+            <div class="alert alert-warning mt-3" role="alert">
+                <i class="bi bi-lock-fill"></i> 
+                <strong>Unlock Required:</strong> To use AI features, please unlock by clicking "Unlock Features" in the navigation menu.
+            </div>
+        }
+    </div>
+
+    <div class="goal-input-section">
+        <div class="input-group input-group-lg">
+            <span class="input-group-text">
+                <i class="bi bi-bullseye"></i>
+            </span>
+            <input type="text"
+                   class="form-control"
+                   placeholder="e.g., Build and launch a mobile app in 6 months"
+                   @bind="ViewModel.Goal"
+                   @bind:event="oninput"
+                   @onkeypress="HandleKeyPress"
+                   disabled="@(ViewModel.IsLoading || !AccessCodeService.HasValidAccess())" />
+            <button class="btn btn-primary"
+                    type="button"
+                    @onclick="PrioritizeAsync"
+                    disabled="@(ViewModel.IsLoading || string.IsNullOrWhiteSpace(ViewModel.Goal) || !AccessCodeService.HasValidAccess())">
+                @if (ViewModel.IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    <span>Analyzing with Gemini...</span>
+                }
+                else
+                {
+                    <i class="bi bi-robot me-2"></i>
+                    <span>Prioritize with Gemini</span>
+                }
+            </button>
+        </div>
+
+        <div class="example-goals mt-3">
+            <small class="text-muted">
+                <strong>Try these examples:</strong>
+            </small>
+            <div class="d-flex gap-2 mt-1 flex-wrap">
+                @foreach (var example in ExampleGoals)
+                {
+                    <button class="btn btn-sm btn-outline-secondary"
+                            @onclick="() => LoadExample(example)"
+                            disabled="@(ViewModel.IsLoading || !AccessCodeService.HasValidAccess())">
+                        @example
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="results-section mt-4">
+        @if (ViewModel.IsLoading)
+        {
+            <LoadingSpinner Message="AI is analyzing your goal and creating a prioritized action plan..." />
+        }
+        else if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
+        {
+            <ErrorDisplay Message="@ViewModel.ErrorMessage" OnDismiss="ClearError" />
+        }
+        else if (ViewModel.Result != null)
+        {
+            <div class="result-container animate-fade-in">
+                <div class="result-actions mb-3">
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-success btn-sm" @onclick="ExportToJson" title="Export as JSON">
+                            <i class="bi bi-filetype-json"></i> JSON
+                        </button>
+                        <button class="btn btn-info btn-sm" @onclick="ExportToText" title="Export as Text">
+                            <i class="bi bi-filetype-txt"></i> Text
+                        </button>
+                    </div>
+                    <button class="btn btn-secondary btn-sm ms-2" @onclick="ResetForm">
+                        <i class="bi bi-arrow-clockwise"></i> New Goal
+                    </button>
+                </div>
+
+                <TaskList Tasks="@ViewModel.Result.TaskItems"
+                          Summary="@ViewModel.Result.ExecutiveSummary"
+                          UsageMetadata="@ViewModel.Result.UsageMetadata" />
+            </div>
+        }
+        else
+        {
+            <div class="placeholder-state">
+                <i class="bi bi-lightbulb display-1 text-muted"></i>
+                <p class="text-muted mt-3">
+                    @if (AccessCodeService.HasValidAccess())
+                    {
+                        <span>Enter your goal above to get started</span>
+                    }
+                    else
+                    {
+                        <span>Unlock features to start using AI-powered task prioritization</span>
+                    }
+                </p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private CancellationTokenSource? _cts;
+
+    private readonly string[] ExampleGoals = new[]
+    {
+        "Launch a SaaS product in 3 months",
+        "Learn machine learning fundamentals",
+        "Organize a tech conference",
+        "Build a personal brand on LinkedIn"
+    };
+
+    protected override void OnInitialized()
+    {
+        ViewModel.Reset();
+        AccessCodeService.OnAccessStateChanged += StateHasChanged;
+    }
+
+    private async Task PrioritizeAsync()
+    {
+        if (!AccessCodeService.HasValidAccess())
+        {
+            ViewModel.ErrorMessage = "Please unlock features first by clicking 'Unlock Features' in the menu.";
+            StateHasChanged();
+            return;
+        }
+
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+
+        await ViewModel.PrioritizeAsync(_cts.Token);
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(ViewModel.Goal) && AccessCodeService.HasValidAccess())
+        {
+            await PrioritizeAsync();
+        }
+    }
+
+    private void LoadExample(string example)
+    {
+        ViewModel.Goal = example;
+        StateHasChanged();
+    }
+
+    private void ClearError()
+    {
+        ViewModel.ErrorMessage = null;
+        StateHasChanged();
+    }
+
+    private void ResetForm()
+    {
+        ViewModel.Reset();
+        StateHasChanged();
+    }
+
+    private async Task ExportToJson()
+    {
+        if (ViewModel.Result == null) return;
+
+        try
+        {
+            var jsonContent = ExportService.ExportToJson(ViewModel.Result, ViewModel.Goal);
+            var filename = $"prioritization-{DateTime.UtcNow:yyyyMMdd-HHmmss}.json";
+            await DownloadFile(jsonContent, filename, "application/json");
+        }
+        catch (Exception ex)
+        {
+            ViewModel.ErrorMessage = $"Failed to export: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExportToText()
+    {
+        if (ViewModel.Result == null) return;
+
+        try
+        {
+            var textContent = ExportService.ExportToText(ViewModel.Result, ViewModel.Goal);
+            var filename = $"prioritization-{DateTime.UtcNow:yyyyMMdd-HHmmss}.txt";
+            await DownloadFile(textContent, filename, "text/plain");
+        }
+        catch (Exception ex)
+        {
+            ViewModel.ErrorMessage = $"Failed to export: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadFile(string content, string filename, string contentType)
+    {
+        await JSRuntime.InvokeVoidAsync("downloadFile", content, filename, contentType);
+    }
+
+    public void Dispose()
+    {
+        AccessCodeService.OnAccessStateChanged -= StateHasChanged;
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

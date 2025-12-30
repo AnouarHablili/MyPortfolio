@@ -1,0 +1,16 @@
+@namespace MyPortfolio.Shared.Components.Common
+
+<div class="loading-spinner-container">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p class="loading-message mt-3">@Message</p>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Message { get; set; }
+}

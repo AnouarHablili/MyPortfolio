@@ -1,0 +1,116 @@
+@implements IDisposable
+@namespace MyPortfolio.Shared.Components.POC
+@using MyPortfolio.Shared.Models
+@using MyPortfolio.Shared.Services
+@inject AccessCodeService AccessCodeService
+
+<div class="poc-card @GetStatusClass()" @onclick="HandleClick" role="button">
+    <div class="poc-card-header">
+        @if (!string.IsNullOrEmpty(POC.IconUrl))
+        {
+            <img src="@POC.IconUrl" alt="@POC.Title" class="poc-icon" />
+        }
+        else
+        {
+            <div class="poc-icon-placeholder">
+                <i class="bi bi-box" style="font-size: 2rem;"></i>
+            </div>
+        }
+        <span class="category-badge">@POC.Category</span>
+        @if (POC.Status == POCStatus.Active && !AccessCodeService.HasValidAccess())
+        {
+            <span class="lock-badge">
+                <i class="bi bi-lock-fill"></i>
+            </span>
+        }
+    </div>
+
+    <div class="poc-card-body">
+        <h4 class="poc-title">@POC.Title</h4>
+        <p class="poc-description">@POC.Description</p>
+
+        @if (POC.Technologies.Count > 0)
+        {
+            <div class="poc-technologies">
+                @foreach (var tech in POC.Technologies)
+                {
+                    <span class="badge bg-light text-dark">@tech</span>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="poc-card-footer">
+        @switch (POC.Status)
+        {
+            case POCStatus.Active:
+                <button class="btn btn-primary btn-sm w-100" @onclick:stopPropagation="true" @onclick="HandleClick">
+                    <i class="bi bi-arrow-right"></i> View POC
+                </button>
+                @if (!AccessCodeService.HasValidAccess())
+                {
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-info-circle"></i> Unlock to use interactive features
+                    </small>
+                }
+                break;
+            case POCStatus.ComingSoon:
+                <button class="btn btn-secondary btn-sm w-100" disabled>
+                    <i class="bi bi-hourglass-split"></i> Coming Soon
+                </button>
+                break;
+            case POCStatus.Deprecated:
+                <span class="text-muted">This POC is no longer maintained</span>
+                break;
+        }
+    </div>
+</div>
+
+<style>
+    .lock-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 193, 7, 0.9);
+        color: #000;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+</style>
+
+@code {
+    [Parameter, EditorRequired]
+    public POCMetadata POC { get; set; } = null!;
+
+    [Inject]
+    public NavigationService NavigationService { get; set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        AccessCodeService.OnAccessStateChanged += StateHasChanged;
+    }
+
+    private void HandleClick()
+    {
+        if (POC.Status == POCStatus.Active)
+        {
+            NavigationService.NavigateToPOC(POC.Id);
+        }
+    }
+
+    private string GetStatusClass()
+    {
+        return POC.Status switch
+        {
+            POCStatus.ComingSoon => "coming-soon",
+            POCStatus.Deprecated => "deprecated",
+            _ => string.Empty
+        };
+    }
+
+    public void Dispose()
+    {
+        AccessCodeService.OnAccessStateChanged -= StateHasChanged;
+    }
+}

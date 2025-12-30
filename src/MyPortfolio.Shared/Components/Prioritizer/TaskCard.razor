@@ -1,0 +1,31 @@
+@namespace MyPortfolio.Shared.Components.Prioritizer
+@using MyPortfolio.Core.Features.Prioritizer.Models
+
+<div class="task-card rank-@Task.Rank">
+    <div class="task-card-header">
+        <span class="task-rank">#@Task.Rank</span>
+        <h4 class="task-title">@Task.TaskTitle</h4>
+    </div>
+
+    <div class="task-card-body">
+        <div class="reasoning-section">
+            <label class="reasoning-label">
+                <i class="bi bi-lightbulb-fill"></i> Reasoning:
+            </label>
+            <p class="reasoning-text">@Task.ReasoningChain</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Task.Estimate))
+        {
+            <div class="estimate-section">
+                <i class="bi bi-clock-fill"></i>
+                <span class="estimate-text">@Task.Estimate</span>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public TaskItem Task { get; set; } = null!;
+}

@@ -1,0 +1,60 @@
+@namespace MyPortfolio.Shared.Components.POC
+@using MyPortfolio.Shared.Models
+@using MyPortfolio.Shared.Services
+
+<div class="poc-gallery-container">
+    @if (POCs == null || !POCs.Any())
+    {
+        <div class="empty-state">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="text-muted mt-3">No POCs available at the moment.</p>
+        </div>
+    }
+    else
+    {
+        <div class="poc-grid">
+            @foreach (var poc in POCs)
+            {
+                <POCCard POC="@poc" />
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .poc-gallery-container {
+        width: 100%;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 1rem;
+    }
+
+    .poc-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        padding: 1rem 0;
+    }
+
+    /* Medium screens - 2 cards per row */
+    @@media (max-width: 1200px) {
+        .poc-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Small screens - 1 card per row */
+    @@media (max-width: 768px) {
+        .poc-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public IEnumerable<POCMetadata>? POCs { get; set; }
+}

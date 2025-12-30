@@ -1,0 +1,42 @@
+﻿.access-code-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    padding: 2rem;
+}
+
+.access-code-card {
+    max-width: 500px;
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+    .access-code-card .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+
+        .access-code-card .card-header i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .access-code-card .card-header h2 {
+            margin: 0;
+            font-size: 1.75rem;
+        }
+
+    .access-code-card .card-body {
+        padding: 2rem;
+    }
+
+.demo-codes {
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}

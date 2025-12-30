@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Components\Prioritizer\Prioritizer\**" />
+    <Content Remove="Components\Prioritizer\Prioritizer\**" />
+    <EmbeddedResource Remove="Components\Prioritizer\Prioritizer\**" />
+    <None Remove="Components\Prioritizer\Prioritizer\**" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\Common\" />
+    <Folder Include="Components\FAQ\" />
+    <Folder Include="Components\Layout\" />
+    <Folder Include="Components\Testimonials\" />
+    <Folder Include="ViewModels\" />
+    <Folder Include="wwwroot\images\" />
+    <Folder Include="wwwroot\js\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyPortfolio.Core\MyPortfolio.Core.csproj" />
+  </ItemGroup>
+
+</Project>

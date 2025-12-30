@@ -1,0 +1,14 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "{\"TaskItems\": [{\"rank\": 1, \"taskTitle\": \"Define MVP\", \"reasoningChain\": \"Critical first step\", \"estimate\": \"3 days\"}], \"ExecutiveSummary\": \"Initial validation phase\"}"
+          }
+        ],
+        "role": "model"
+      }
+    }
+  ]
+}

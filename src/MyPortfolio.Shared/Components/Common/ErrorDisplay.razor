@@ -1,0 +1,15 @@
+@namespace MyPortfolio.Shared.Components.Common
+
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-circle-fill me-2"></i>
+    <strong>Error:</strong> @Message
+    <button type="button" class="btn-close" @onclick="OnDismiss"></button>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Message { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback OnDismiss { get; set; }
+}

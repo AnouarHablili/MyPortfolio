@@ -10,11 +10,56 @@ obj/
 *.userosscache
 *.sln.docstates
 
-# Secrets
-appsettings.Development.json
-appsettings.Local.json
+# Secrets - Development and Local configurations
+# appsettings.Development.json # Commented out to allow tracking if desired, but usually ignored.
+# appsettings.Local.json
+# appsettings.Production.json
 .env
 .env.*
 
 # VS Code
 .vscode/
+
+##############################################
+# Local Configuration Files (MUST be ignored)
+##############################################
+# Ignores appsettings.json files in any sub-folder
+# **/appsettings*.json # This is too aggressive if we want to track the template appsettings.json
+appsettings.Local.json
+appsettings.Development.json
+
+# Visual Studio cache and settings
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+Debug/
+Release/
+TestResults/
+
+# Copilot/IntelliSense snapshots
+CopolIoSnapshots/
+
+# Logs and reports
+*.log
+*.tlog
+*.wrn
+*.err
+
+# NuGet
+*.nupkg
+packages/
+*.snupkg
+
+# Others
+*.dbmdl
+*.bak
+*.tmp
+
+# Secrets
+secrets.json

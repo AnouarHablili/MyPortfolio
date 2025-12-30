@@ -1,0 +1,50 @@
+@namespace MyPortfolio.Shared.Components.Prioritizer
+@using MyPortfolio.Core.Features.Prioritizer.Models
+
+<div class="task-list-container">
+    @if (!string.IsNullOrEmpty(Summary))
+    {
+        <div class="executive-summary">
+            <h3>
+                <i class="bi bi-file-text-fill"></i> Executive Summary
+            </h3>
+            <p>@Summary</p>
+        </div>
+    }
+
+    @if (UsageMetadata != null)
+    {
+        <div class="usage-metadata">
+            <small class="text-muted">
+                <i class="bi bi-info-circle"></i>
+                Tokens: @UsageMetadata.TotalTokenCount
+                (Prompt: @UsageMetadata.PromptTokenCount, Response: @UsageMetadata.CandidatesTokenCount)
+            </small>
+        </div>
+    }
+
+    <div class="tasks-section">
+        <h3>
+            <i class="bi bi-list-check"></i> Prioritized Tasks
+            <span class="badge bg-primary">@Tasks.Count()</span>
+        </h3>
+
+        <div class="tasks-grid">
+            @foreach (var task in Tasks.OrderBy(t => t.Rank))
+            {
+                <TaskCard Task="@task" />
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<TaskItem> Tasks { get; set; } = Enumerable.Empty<TaskItem>();
+
+    [Parameter]
+    public string? Summary { get; set; }
+
+    [Parameter]
+    public UsageMetadata? UsageMetadata { get; set; }
+}
