@@ -11,7 +11,7 @@ primary_region = 'iad'
 
 [env]
   ASPNETCORE_ENVIRONMENT = 'Production'
-  ASPNETCORE_URLS = 'http://+:8080'
+  ASPNETCORE_URLS = 'http://0.0.0.0:8080'
   ASPNETCORE_FORWARDEDHEADERS_ENABLED = 'true'
 
 [http_service]
