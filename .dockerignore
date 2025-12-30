@@ -1,6 +1,8 @@
-# Build artifacts
+# Build artifacts (IMPORTANT: excludes corrupted NuGet cache references)
 bin/
 obj/
+**/bin/
+**/obj/
 out/
 publish/
 
@@ -46,3 +48,6 @@ src/MyPortfolio.Maui/
 # Temporary files
 *.tmp
 *.temp
+
+# NuGet
+*.nupkg
