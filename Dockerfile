@@ -36,7 +36,7 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true
 EXPOSE 8080
 
 # Use the built-in non-root user (available in .NET 8+ images)
-USER $APP_UID
+#USER $APP_UID
 
 # Entry point
 ENTRYPOINT ["dotnet", "MyPortfolio.Web.dll"]
