@@ -1,5 +1,6 @@
 using MyPortfolio.Core.Abstractions;
 using MyPortfolio.Core.Features.Prioritizer.Models;
+using MyPortfolio.Core.Features.Prioritizer.Services;
 using MyPortfolio.Web.Endpoints;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,14 +13,20 @@ public static class PrioritizerEndpoints
         var group = app.MapGroup("/api/prioritizer")
             .RequireAuthorization(); // Require access code
 
-        group.MapPost("/prioritize", async ([FromBody] string goal, IAIService aiService) =>
+        group.MapPost("/prioritize", async (
+            [FromBody] PrioritizeRequest request,
+            IAIServiceFactory aiServiceFactory,
+            IAIService defaultService) =>
         {
-            if (string.IsNullOrWhiteSpace(goal))
+            if (string.IsNullOrWhiteSpace(request.Goal))
             {
                 return Results.BadRequest("Goal cannot be empty");
             }
 
-            var result = await aiService.PrioritizeGoalAsync(goal);
+            // Get the appropriate service based on provider ID, fallback to default (Gemini)
+            var aiService = aiServiceFactory.GetService(request.ProviderId ?? "gemini") ?? defaultService;
+
+            var result = await aiService.PrioritizeGoalAsync(request.Goal);
 
             if (result.IsSuccess)
             {
@@ -32,4 +39,13 @@ public static class PrioritizerEndpoints
         })
         .WithName("PrioritizeGoal");
     }
+}
+
+/// <summary>
+/// Request model for the prioritize endpoint.
+/// </summary>
+public class PrioritizeRequest
+{
+    public string Goal { get; set; } = string.Empty;
+    public string? ProviderId { get; set; }
 }

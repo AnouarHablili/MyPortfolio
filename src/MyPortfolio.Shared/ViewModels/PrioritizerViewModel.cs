@@ -10,6 +10,7 @@ public class PrioritizerViewModel
     private readonly AccessCodeService _accessCodeService;
 
     public string Goal { get; set; } = string.Empty;
+    public string ProviderId { get; set; } = "gemini";
     public bool IsLoading { get; set; }
     public string? ErrorMessage { get; set; }
     public PrioritizationResponse? Result { get; set; }
@@ -46,7 +47,8 @@ public class PrioritizerViewModel
                 _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             }
 
-            var response = await _httpClient.PostAsJsonAsync("api/prioritizer/prioritize", Goal, cancellationToken);
+            var request = new { Goal, ProviderId };
+            var response = await _httpClient.PostAsJsonAsync("api/prioritizer/prioritize", request, cancellationToken);
 
             if (response.IsSuccessStatusCode)
             {
@@ -75,6 +77,7 @@ public class PrioritizerViewModel
     public void Reset()
     {
         Goal = string.Empty;
+        ProviderId = "gemini";
         IsLoading = false;
         ErrorMessage = null;
         Result = null;

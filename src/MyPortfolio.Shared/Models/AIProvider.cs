@@ -89,8 +89,7 @@ public static class AIProviders
         Description = "Command and Embed models",
         IconClass = "bi-diagram-3-fill",
         BadgeClass = "bg-danger",
-        IsEnabled = false,
-        DisabledReason = "API key not configured",
+        IsEnabled = true,
         ProviderUrl = "https://cohere.com/"
     };
 

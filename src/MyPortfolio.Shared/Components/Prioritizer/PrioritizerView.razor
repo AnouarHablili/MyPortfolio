@@ -184,16 +184,23 @@
     private readonly string[] ExampleGoals = new[] { "Launch a SaaS product", "Learn ML fundamentals", "Organize a conference", "Build personal brand" };
 
     protected override void OnInitialized() { ViewModel.Reset(); AccessCodeService.OnAccessStateChanged += StateHasChanged; }
-    private void SelectProvider(AIProvider p) { if (!p.IsEnabled) return; _selectedProviderId = p.Id; _selectedProvider = p; StateHasChanged(); }
+    private void SelectProvider(AIProvider p) { 
+        if (!p.IsEnabled) return; 
+        _selectedProviderId = p.Id; 
+        _selectedProvider = p; 
+        ViewModel.ProviderId = p.Id; // Update the ViewModel's provider
+        StateHasChanged(); 
+    }
     private async Task PrioritizeAsync() {
         if (!AccessCodeService.HasValidAccess()) { ViewModel.ErrorMessage = "Please unlock features first."; StateHasChanged(); return; }
         _cts?.Cancel(); _cts = new CancellationTokenSource();
+        ViewModel.ProviderId = _selectedProviderId; // Ensure provider is set before calling
         await ViewModel.PrioritizeAsync(_cts.Token); StateHasChanged();
     }
     private async Task HandleKeyPress(KeyboardEventArgs e) { if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(ViewModel.Goal) && AccessCodeService.HasValidAccess()) await PrioritizeAsync(); }
     private void LoadExample(string ex) { ViewModel.Goal = ex; StateHasChanged(); }
     private void ClearError() { ViewModel.ErrorMessage = null; StateHasChanged(); }
-    private void ResetForm() { ViewModel.Reset(); StateHasChanged(); }
+    private void ResetForm() { ViewModel.Reset(); _selectedProviderId = AIProviders.Gemini.Id; _selectedProvider = AIProviders.Gemini; StateHasChanged(); }
     private async Task ExportToJson() { if (ViewModel.Result == null) return; var c = ExportService.ExportToJson(ViewModel.Result, ViewModel.Goal); await JSRuntime.InvokeVoidAsync("downloadFile", c, $"tasks-{DateTime.UtcNow:yyyyMMdd}.json", "application/json"); }
     private async Task ExportToText() { if (ViewModel.Result == null) return; var c = ExportService.ExportToText(ViewModel.Result, ViewModel.Goal); await JSRuntime.InvokeVoidAsync("downloadFile", c, $"tasks-{DateTime.UtcNow:yyyyMMdd}.txt", "text/plain"); }
     public void Dispose() { AccessCodeService.OnAccessStateChanged -= StateHasChanged; _cts?.Cancel(); _cts?.Dispose(); }
