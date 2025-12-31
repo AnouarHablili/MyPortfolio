@@ -1,5 +1,5 @@
 app = "myportfolio-web"
-primary_region = "iad"
+primary_region = "iad"   # USA East (Virginia)
 
 [build]
   dockerfile = "Dockerfile"
@@ -10,18 +10,15 @@ primary_region = "iad"
   ASPNETCORE_URLS = "http://0.0.0.0:8080"
 
 [http_service]
-  internal_port = 8080
-  force_https = true
-  auto_stop_machines = false
   auto_start_machines = true
+  auto_stop_machines = false
+  force_https = true
+  internal_port = 8080
   min_machines_running = 1
   processes = ["app"]
-  session_affinity = true
 
-  [http_service.concurrency]
-    type = "connections"
-    hard_limit = 100
-    soft_limit = 80
+  [http_service.http_options.response.headers]
+    X-Frame-Options = "SAMEORIGIN"
 
   [[http_service.checks]]
     grace_period = "10s"
@@ -29,6 +26,11 @@ primary_region = "iad"
     method = "GET"
     path = "/health"
     timeout = "5s"
+
+  [http_service.concurrency]
+    hard_limit = 100
+    soft_limit = 80
+    type = "connections"
 
 [[vm]]
   cpu_kind = "shared"
