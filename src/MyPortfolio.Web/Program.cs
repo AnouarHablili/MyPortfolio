@@ -93,8 +93,9 @@ builder.Services.AddScoped(sp =>
     return factory.CreateClient("LocalApi");
 });
 
-// Register Core Services (Gemini AI Service)
-builder.Services.AddGeminiService(builder.Configuration);
+// Register All AI Services (Gemini, OpenAI, Azure OpenAI, Anthropic, Cohere)
+// Only Gemini is currently configured with an API key - others are ready for future use
+builder.Services.AddAIServices(builder.Configuration);
 
 // Register JWT Token Service
 builder.Services.AddSingleton<JwtTokenService>();
