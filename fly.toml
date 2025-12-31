@@ -1,18 +1,13 @@
-# fly.toml app configuration file generated for myportfolio-web on 2025-12-30T05:55:26+01:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
-app = 'myportfolio-web'
-primary_region = 'iad'  
+app = "myportfolio-web"
+primary_region = "iad"
 
 [build]
-  dockerfile = 'Dockerfile'
+  dockerfile = "Dockerfile"
 
 [env]
-  ASPNETCORE_ENVIRONMENT = 'Production'
-  ASPNETCORE_URLS = 'http://0.0.0.0:8080'
-  ASPNETCORE_FORWARDEDHEADERS_ENABLED = 'true'
+  ASPNETCORE_ENVIRONMENT = "Production"
+  ASPNETCORE_FORWARDEDHEADERS_ENABLED = "true"
+  ASPNETCORE_URLS = "http://0.0.0.0:8080"
 
 [http_service]
   internal_port = 8080
@@ -20,22 +15,22 @@ primary_region = 'iad'
   auto_stop_machines = false
   auto_start_machines = true
   min_machines_running = 1
-  processes = ['app']
+  processes = ["app"]
   session_affinity = true
 
   [http_service.concurrency]
-    type = 'connections'
+    type = "connections"
     hard_limit = 100
     soft_limit = 80
 
   [[http_service.checks]]
-    interval = '30s'
-    timeout = '5s'
-    grace_period = '10s'
-    method = 'GET'
-    path = '/health'
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/health"
+    timeout = "5s"
 
 [[vm]]
-  memory = '256mb'
-  cpu_kind = 'shared'
+  cpu_kind = "shared"
   cpus = 1
+  memory = "256mb"
