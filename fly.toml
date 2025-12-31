@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for myportfolio-web-crimson-field-3170 on 2025-12-30T05:55:26+01:00
+# fly.toml app configuration file generated for myportfolio-web on 2025-12-30T05:55:26+01:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'myportfolio-web-crimson-field-3170'
-primary_region = 'iad'
+app = 'myportfolio-web'
+region = 'iad'  
 
 [build]
   dockerfile = 'Dockerfile'
@@ -17,7 +17,7 @@ primary_region = 'iad'
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = 'off'
+  auto_stop_machines = false
   auto_start_machines = true
   min_machines_running = 1
   processes = ['app']
