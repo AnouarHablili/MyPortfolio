@@ -3,6 +3,7 @@
 @using MyPortfolio.Shared.Components.Common
 @using MyPortfolio.Core.Features.Prioritizer.Models
 @using MyPortfolio.Shared.Services
+@using MyPortfolio.Shared.Models
 @using Microsoft.JSInterop
 @implements IDisposable
 @inject PrioritizerViewModel ViewModel
@@ -11,220 +12,189 @@
 @inject IJSRuntime JSRuntime
 
 <div class="prioritizer-view">
-    <div class="prioritizer-header">
-        <h1>
-            <i class="bi bi-robot"></i> AI Task Prioritizer
-        </h1>
-        <p class="lead">
-            Powered by Google Gemini 2.5 Flash - Enter a high-level goal and get intelligent task breakdown
-        </p>
+    <!-- Compact Hero Header -->
+    <div class="prioritizer-hero">
+        <span class="hero-badge"><i class="bi bi-robot"></i> AI-Powered</span>
+        <h1>Task Prioritizer</h1>
+        <p class="hero-subtitle">Transform goals into <span class="highlight">actionable plans</span> with AI</p>
         @if (!AccessCodeService.HasValidAccess())
         {
-            <div class="alert alert-warning mt-3" role="alert">
-                <i class="bi bi-lock-fill"></i> 
-                <strong>Unlock Required:</strong> To use AI features, please unlock by clicking "Unlock Features" in the navigation menu.
+            <div class="unlock-banner">
+                <i class="bi bi-lock-fill"></i>
+                <span><strong>Unlock Required</strong> — Click "Unlock Features" in the menu</span>
             </div>
         }
     </div>
 
-    <div class="goal-input-section">
-        <div class="input-group input-group-lg">
-            <span class="input-group-text">
-                <i class="bi bi-bullseye"></i>
-            </span>
-            <input type="text"
-                   class="form-control"
-                   placeholder="e.g., Build and launch a mobile app in 6 months"
-                   @bind="ViewModel.Goal"
-                   @bind:event="oninput"
-                   @onkeypress="HandleKeyPress"
-                   disabled="@(ViewModel.IsLoading || !AccessCodeService.HasValidAccess())" />
-            <button class="btn btn-primary"
-                    type="button"
-                    @onclick="PrioritizeAsync"
-                    disabled="@(ViewModel.IsLoading || string.IsNullOrWhiteSpace(ViewModel.Goal) || !AccessCodeService.HasValidAccess())">
-                @if (ViewModel.IsLoading)
-                {
-                    <span class="spinner-border spinner-border-sm me-2"></span>
-                    <span>Analyzing with Gemini...</span>
-                }
-                else
-                {
-                    <i class="bi bi-robot me-2"></i>
-                    <span>Prioritize with Gemini</span>
-                }
-            </button>
+    <!-- AI Provider Selection -->
+    <div class="provider-section">
+        <div class="provider-header">
+            <span class="provider-label"><i class="bi bi-cpu"></i> AI Provider</span>
         </div>
-
-        <div class="example-goals mt-3">
-            <small class="text-muted">
-                <strong>Try these examples:</strong>
-            </small>
-            <div class="d-flex gap-2 mt-1 flex-wrap">
-                @foreach (var example in ExampleGoals)
-                {
-                    <button class="btn btn-sm btn-outline-secondary"
-                            @onclick="() => LoadExample(example)"
-                            disabled="@(ViewModel.IsLoading || !AccessCodeService.HasValidAccess())">
-                        @example
-                    </button>
-                }
-            </div>
+        <div class="provider-grid">
+            @foreach (var provider in AIProviders.All)
+            {
+                <button class="provider-btn @(provider.Id == _selectedProviderId ? "active" : "") @(!provider.IsEnabled ? "disabled" : "")"
+                        @onclick="() => SelectProvider(provider)"
+                        disabled="@(!provider.IsEnabled)"
+                        title="@(provider.IsEnabled ? provider.Description : provider.DisabledReason)">
+                    <i class="bi @provider.IconClass"></i>
+                    <span>@provider.Name</span>
+                    @if (!provider.IsEnabled) { <i class="bi bi-lock-fill lock-icon"></i> }
+                    @if (provider.IsEnabled && provider.Id == _selectedProviderId) { <i class="bi bi-check-circle-fill check-icon"></i> }
+                </button>
+            }
         </div>
     </div>
 
-    <div class="results-section mt-4">
+    <!-- Goal Input -->
+    <div class="goal-section">
+        <label class="goal-label"><i class="bi bi-bullseye"></i> Your Goal</label>
+        <div class="goal-input-wrapper">
+            <input type="text" class="goal-input" placeholder="e.g., Build and launch a mobile app in 6 months"
+                   @bind="ViewModel.Goal" @bind:event="oninput" @onkeypress="HandleKeyPress"
+                   disabled="@(ViewModel.IsLoading || !AccessCodeService.HasValidAccess())" id="goalInput" name="goal" />
+            <button class="goal-btn" @onclick="PrioritizeAsync"
+                    disabled="@(ViewModel.IsLoading || string.IsNullOrWhiteSpace(ViewModel.Goal) || !AccessCodeService.HasValidAccess())">
+                @if (ViewModel.IsLoading) { <span class="spinner-border spinner-border-sm"></span> <span>Analyzing...</span> }
+                else { <i class="bi bi-magic"></i> <span>Prioritize</span> }
+            </button>
+        </div>
+        <div class="example-chips">
+            <span class="chips-label">Try:</span>
+            @foreach (var ex in ExampleGoals)
+            {
+                <button class="chip" @onclick="() => LoadExample(ex)" disabled="@(ViewModel.IsLoading || !AccessCodeService.HasValidAccess())">@ex</button>
+            }
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="results-section">
         @if (ViewModel.IsLoading)
         {
-            <LoadingSpinner Message="AI is analyzing your goal and creating a prioritized action plan..." />
+            <div class="loading-state"><div class="spinner-border text-primary"></div><p>Analyzing your goal...</p></div>
         }
         else if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
         {
-            <ErrorDisplay Message="@ViewModel.ErrorMessage" OnDismiss="ClearError" />
+            <div class="error-state"><i class="bi bi-exclamation-triangle"></i><p>@ViewModel.ErrorMessage</p>
+                <button class="btn btn-outline-secondary btn-sm" @onclick="ClearError">Dismiss</button></div>
         }
         else if (ViewModel.Result != null)
         {
-            <div class="result-container animate-fade-in">
-                <div class="result-actions mb-3">
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-success btn-sm" @onclick="ExportToJson" title="Export as JSON">
-                            <i class="bi bi-filetype-json"></i> JSON
-                        </button>
-                        <button class="btn btn-info btn-sm" @onclick="ExportToText" title="Export as Text">
-                            <i class="bi bi-filetype-txt"></i> Text
-                        </button>
+            <div class="result-container">
+                <div class="result-header">
+                    <span class="result-title"><i class="bi bi-list-check"></i> Prioritized Tasks</span>
+                    <div class="result-actions">
+                        <button class="action-btn" @onclick="ExportToJson" title="JSON"><i class="bi bi-filetype-json"></i></button>
+                        <button class="action-btn" @onclick="ExportToText" title="Text"><i class="bi bi-filetype-txt"></i></button>
+                        <button class="action-btn" @onclick="ResetForm" title="New"><i class="bi bi-arrow-clockwise"></i></button>
                     </div>
-                    <button class="btn btn-secondary btn-sm ms-2" @onclick="ResetForm">
-                        <i class="bi bi-arrow-clockwise"></i> New Goal
-                    </button>
                 </div>
-
-                <TaskList Tasks="@ViewModel.Result.TaskItems"
-                          Summary="@ViewModel.Result.ExecutiveSummary"
-                          UsageMetadata="@ViewModel.Result.UsageMetadata" />
+                <TaskList Tasks="@ViewModel.Result.TaskItems" Summary="@ViewModel.Result.ExecutiveSummary" UsageMetadata="@ViewModel.Result.UsageMetadata" />
             </div>
         }
         else
         {
-            <div class="placeholder-state">
-                <i class="bi bi-lightbulb display-1 text-muted"></i>
-                <p class="text-muted mt-3">
-                    @if (AccessCodeService.HasValidAccess())
-                    {
-                        <span>Enter your goal above to get started</span>
-                    }
-                    else
-                    {
-                        <span>Unlock features to start using AI-powered task prioritization</span>
-                    }
-                </p>
-            </div>
+            <div class="empty-state"><i class="bi bi-lightbulb"></i><p>Enter a goal to generate your action plan</p></div>
         }
     </div>
 </div>
 
+<style>
+    .prioritizer-view { display: flex; flex-direction: column; gap: 1rem; }
+
+    .prioritizer-hero { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 1rem 1.25rem; color: white; text-align: center; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(255,255,255,0.2); padding: 0.15rem 0.5rem; border-radius: 10px; font-size: 0.7rem; font-weight: 500; margin-bottom: 0.4rem; }
+    .prioritizer-hero h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 0.2rem 0; }
+    .hero-subtitle { font-size: 0.85rem; margin: 0; opacity: 0.95; }
+    .hero-subtitle .highlight { font-weight: 600; }
+    .unlock-banner { background: rgba(255,193,7,0.9); color: #000; padding: 0.4rem 0.75rem; border-radius: 6px; margin-top: 0.6rem; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+
+    .provider-section { background: #f8f9fa; border-radius: 10px; padding: 0.85rem; }
+    .provider-header { margin-bottom: 0.6rem; }
+    .provider-label { font-weight: 600; font-size: 0.85rem; color: #495057; }
+    .provider-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    
+    .provider-btn { 
+        display: inline-flex; align-items: center; gap: 0.35rem; 
+        padding: 0.45rem 0.85rem; 
+        border: 2px solid #dee2e6; border-radius: 8px; 
+        background: white; 
+        font-size: 0.8rem; font-weight: 500; 
+        cursor: pointer; transition: all 0.2s; 
+    }
+    .provider-btn:hover:not(.disabled) { border-color: #667eea; background: #f0f0ff; }
+    .provider-btn.active { 
+        border-color: #667eea; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        color: white; 
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    .provider-btn.active .check-icon { color: #4ade80; margin-left: 0.2rem; }
+    
+    .provider-btn.disabled { 
+        opacity: 1;
+        background: #f1f3f5;
+        border-color: #e9ecef;
+        color: #adb5bd;
+        cursor: not-allowed;
+    }
+    .provider-btn.disabled:hover { background: #f1f3f5; border-color: #e9ecef; }
+    .provider-btn .lock-icon { font-size: 0.65rem; color: #868e96; margin-left: 0.15rem; }
+
+    .goal-section { background: white; border: 1px solid #e9ecef; border-radius: 10px; padding: 0.85rem; }
+    .goal-label { display: block; font-weight: 600; font-size: 0.85rem; color: #495057; margin-bottom: 0.4rem; }
+    .goal-input-wrapper { display: flex; gap: 0.4rem; }
+    .goal-input { flex: 1; padding: 0.5rem 0.75rem; border: 2px solid #dee2e6; border-radius: 6px; font-size: 0.9rem; }
+    .goal-input:focus { outline: none; border-color: #667eea; }
+    .goal-input:disabled { background: #f8f9fa; }
+    .goal-btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .goal-btn:hover:not(:disabled) { box-shadow: 0 3px 10px rgba(102,126,234,0.3); }
+    .goal-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .example-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-top: 0.6rem; }
+    .chips-label { font-size: 0.75rem; color: #6c757d; font-weight: 500; }
+    .chip { padding: 0.2rem 0.5rem; background: #e9ecef; border: none; border-radius: 10px; font-size: 0.7rem; color: #495057; cursor: pointer; }
+    .chip:hover:not(:disabled) { background: #dee2e6; }
+    .chip:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .results-section { min-height: 120px; }
+    .loading-state, .error-state, .empty-state { text-align: center; padding: 1.5rem 1rem; color: #6c757d; }
+    .loading-state p, .empty-state p { margin: 0.6rem 0 0; font-size: 0.85rem; }
+    .error-state { background: #fff5f5; border-radius: 10px; color: #dc3545; }
+    .error-state i { font-size: 1.25rem; }
+    .empty-state i { font-size: 2rem; opacity: 0.4; }
+    .result-container { background: white; border: 1px solid #e9ecef; border-radius: 10px; overflow: hidden; }
+    .result-header { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.85rem; background: #f8f9fa; border-bottom: 1px solid #e9ecef; }
+    .result-title { font-weight: 600; font-size: 0.85rem; color: #495057; }
+    .result-actions { display: flex; gap: 0.2rem; }
+    .action-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid #dee2e6; border-radius: 5px; color: #6c757d; cursor: pointer; font-size: 0.8rem; }
+    .action-btn:hover { border-color: #667eea; color: #667eea; }
+
+    @@media (max-width: 640px) {
+        .goal-input-wrapper { flex-direction: column; }
+        .goal-btn { width: 100%; justify-content: center; }
+    }
+</style>
+
 @code {
     private CancellationTokenSource? _cts;
+    private string _selectedProviderId = AIProviders.Gemini.Id;
+    private AIProvider? _selectedProvider = AIProviders.Gemini;
+    private readonly string[] ExampleGoals = new[] { "Launch a SaaS product", "Learn ML fundamentals", "Organize a conference", "Build personal brand" };
 
-    private readonly string[] ExampleGoals = new[]
-    {
-        "Launch a SaaS product in 3 months",
-        "Learn machine learning fundamentals",
-        "Organize a tech conference",
-        "Build a personal brand on LinkedIn"
-    };
-
-    protected override void OnInitialized()
-    {
-        ViewModel.Reset();
-        AccessCodeService.OnAccessStateChanged += StateHasChanged;
+    protected override void OnInitialized() { ViewModel.Reset(); AccessCodeService.OnAccessStateChanged += StateHasChanged; }
+    private void SelectProvider(AIProvider p) { if (!p.IsEnabled) return; _selectedProviderId = p.Id; _selectedProvider = p; StateHasChanged(); }
+    private async Task PrioritizeAsync() {
+        if (!AccessCodeService.HasValidAccess()) { ViewModel.ErrorMessage = "Please unlock features first."; StateHasChanged(); return; }
+        _cts?.Cancel(); _cts = new CancellationTokenSource();
+        await ViewModel.PrioritizeAsync(_cts.Token); StateHasChanged();
     }
-
-    private async Task PrioritizeAsync()
-    {
-        if (!AccessCodeService.HasValidAccess())
-        {
-            ViewModel.ErrorMessage = "Please unlock features first by clicking 'Unlock Features' in the menu.";
-            StateHasChanged();
-            return;
-        }
-
-        _cts?.Cancel();
-        _cts = new CancellationTokenSource();
-
-        await ViewModel.PrioritizeAsync(_cts.Token);
-        StateHasChanged();
-    }
-
-    private async Task HandleKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(ViewModel.Goal) && AccessCodeService.HasValidAccess())
-        {
-            await PrioritizeAsync();
-        }
-    }
-
-    private void LoadExample(string example)
-    {
-        ViewModel.Goal = example;
-        StateHasChanged();
-    }
-
-    private void ClearError()
-    {
-        ViewModel.ErrorMessage = null;
-        StateHasChanged();
-    }
-
-    private void ResetForm()
-    {
-        ViewModel.Reset();
-        StateHasChanged();
-    }
-
-    private async Task ExportToJson()
-    {
-        if (ViewModel.Result == null) return;
-
-        try
-        {
-            var jsonContent = ExportService.ExportToJson(ViewModel.Result, ViewModel.Goal);
-            var filename = $"prioritization-{DateTime.UtcNow:yyyyMMdd-HHmmss}.json";
-            await DownloadFile(jsonContent, filename, "application/json");
-        }
-        catch (Exception ex)
-        {
-            ViewModel.ErrorMessage = $"Failed to export: {ex.Message}";
-            StateHasChanged();
-        }
-    }
-
-    private async Task ExportToText()
-    {
-        if (ViewModel.Result == null) return;
-
-        try
-        {
-            var textContent = ExportService.ExportToText(ViewModel.Result, ViewModel.Goal);
-            var filename = $"prioritization-{DateTime.UtcNow:yyyyMMdd-HHmmss}.txt";
-            await DownloadFile(textContent, filename, "text/plain");
-        }
-        catch (Exception ex)
-        {
-            ViewModel.ErrorMessage = $"Failed to export: {ex.Message}";
-            StateHasChanged();
-        }
-    }
-
-    private async Task DownloadFile(string content, string filename, string contentType)
-    {
-        await JSRuntime.InvokeVoidAsync("downloadFile", content, filename, contentType);
-    }
-
-    public void Dispose()
-    {
-        AccessCodeService.OnAccessStateChanged -= StateHasChanged;
-        _cts?.Cancel();
-        _cts?.Dispose();
-    }
+    private async Task HandleKeyPress(KeyboardEventArgs e) { if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(ViewModel.Goal) && AccessCodeService.HasValidAccess()) await PrioritizeAsync(); }
+    private void LoadExample(string ex) { ViewModel.Goal = ex; StateHasChanged(); }
+    private void ClearError() { ViewModel.ErrorMessage = null; StateHasChanged(); }
+    private void ResetForm() { ViewModel.Reset(); StateHasChanged(); }
+    private async Task ExportToJson() { if (ViewModel.Result == null) return; var c = ExportService.ExportToJson(ViewModel.Result, ViewModel.Goal); await JSRuntime.InvokeVoidAsync("downloadFile", c, $"tasks-{DateTime.UtcNow:yyyyMMdd}.json", "application/json"); }
+    private async Task ExportToText() { if (ViewModel.Result == null) return; var c = ExportService.ExportToText(ViewModel.Result, ViewModel.Goal); await JSRuntime.InvokeVoidAsync("downloadFile", c, $"tasks-{DateTime.UtcNow:yyyyMMdd}.txt", "text/plain"); }
+    public void Dispose() { AccessCodeService.OnAccessStateChanged -= StateHasChanged; _cts?.Cancel(); _cts?.Dispose(); }
 }

@@ -28,28 +28,45 @@
 
     .empty-state {
         text-align: center;
-        padding: 4rem 1rem;
+        padding: 3.3rem 1.1rem;
     }
 
     .poc-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        padding: 1rem 0;
+        gap: 1.4rem;
+        padding: 0.55rem 0;
     }
 
-    /* Medium screens - 2 cards per row */
-    @@media (max-width: 1200px) {
+    /* Large screens - 3 cards per row */
+    @@media (max-width: 1400px) {
         .poc-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.1rem;
         }
     }
 
-    /* Small screens - 1 card per row */
+    /* Medium-large screens - 2 cards per row */
+    @@media (max-width: 1100px) {
+        .poc-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.1rem;
+        }
+    }
+
+    /* Tablets - 2 cards per row */
+    @@media (max-width: 900px) {
+        .poc-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.1rem;
+        }
+    }
+
+    /* Mobile screens - 1 card per row */
     @@media (max-width: 768px) {
         .poc-grid {
             grid-template-columns: 1fr;
-            gap: 1rem;
+            gap: 1.1rem;
         }
     }
 </style>

@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Common\" />
     <Folder Include="Components\FAQ\" />
     <Folder Include="Components\Layout\" />
     <Folder Include="Components\Testimonials\" />

@@ -1,15 +1,15 @@
 .navbar-toggler {
     appearance: none;
     cursor: pointer;
-    width: 2.8rem;
-    height: 2rem;
+    width: 3.1rem;
+    height: 2.2rem;
     color: white;
     position: absolute;
-    top: 0.4rem;
-    right: 0.8rem;
+    top: 0.45rem;
+    right: 0.9rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.4rem rgba(255, 255, 255, 0.1);
-    border-radius: 0.25rem;
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.55rem rgba(255, 255, 255, 0.1);
+    border-radius: 0.3rem;
 }
 
 .navbar-toggler:hover {
@@ -17,12 +17,12 @@
 }
 
 .top-row {
-    height: 2.8rem;
+    height: 3.1rem;
     background-color: rgba(0,0,0,0.4);
 }
 
 .navbar-brand {
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 700;
 }
 
@@ -36,16 +36,16 @@
 }
 
 .nav-item {
-    font-size: 0.75rem;
-    padding-bottom: 0.4rem;
+    font-size: 0.9rem;
+    padding-bottom: 0.45rem;
 }
 
     .nav-item:first-of-type {
-        padding-top: 0.8rem;
+        padding-top: 0.9rem;
     }
 
     .nav-item:last-of-type {
-        padding-bottom: 0.8rem;
+        padding-bottom: 0.9rem;
     }
 
     .nav-item ::deep .nav-link {
@@ -53,13 +53,17 @@
         background: none;
         border: none;
         border-radius: 4px;
-        height: 2.4rem;
+        height: 2.65rem;
         display: flex;
         align-items: center;
-        line-height: 2.4rem;
+        line-height: 2.65rem;
         width: 100%;
         text-align: left;
-        padding: 0 0.8rem;
+        padding: 0 0.9rem;
+    }
+
+    .nav-item ::deep a.nav-link {
+        text-decoration: none;
     }
 
     .nav-item ::deep .nav-link.active {
@@ -80,11 +84,17 @@
         text-decoration: none;
     }
 
+.nav-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.15);
+    margin: 0.85rem 1.1rem;
+}
+
 .bi {
-    width: 1.6rem;
-    font-size: 0.9rem;
+    width: 1.75rem;
+    font-size: 1.05rem;
     vertical-align: text-top;
-    margin-right: 0.4rem;
+    margin-right: 0.45rem;
 }
 
 @media (min-width: 641px) {
@@ -94,7 +104,7 @@
 
     .nav-scrollable {
         display: block !important;
-        height: calc(100vh - 2.8rem);
+        height: calc(100vh - 3.1rem);
         overflow-y: auto;
     }
 }

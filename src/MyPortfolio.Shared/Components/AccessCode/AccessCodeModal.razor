@@ -1,5 +1,6 @@
 @namespace MyPortfolio.Shared.Components.AccessCode
 @using MyPortfolio.Shared.Services
+@inject AccessCodeService AccessCodeService
 
 <div class="modal @(IsVisible ? "show" : "")" style="display: @(IsVisible ? "block" : "none"); z-index: 9999;" tabindex="-1">
     <div class="modal-backdrop @(IsVisible ? "show" : "")" style="z-index: 9998; background-color: rgba(0,0,0,0.5);"></div>
@@ -27,10 +28,11 @@
                 }
 
                 <div class="mb-3">
-                    <label for="accessCode" class="form-label">Access Code</label>
+                    <label for="accessCodeInput" class="form-label">Access Code</label>
                     <input type="password"
                            class="form-control"
-                           id="accessCode"
+                           id="accessCodeInput"
+                           name="accessCode"
                            @bind="AccessCode"
                            @bind:event="oninput"
                            @onkeypress="HandleKeyPress"
@@ -47,7 +49,7 @@
                 <button type="button"
                         class="btn btn-primary"
                         @onclick="OnSubmit"
-                        @disabled="IsLoading || string.IsNullOrWhiteSpace(AccessCode)">
+                        disabled="@(IsLoading || string.IsNullOrWhiteSpace(AccessCode))">
                     @if (IsLoading)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
@@ -68,22 +70,56 @@
     public bool IsVisible { get; set; }
 
     [Parameter]
-    public EventCallback<string> OnCodeSubmitted { get; set; }
-
-    [Parameter]
     public EventCallback OnModalClosed { get; set; }
 
-    public bool IsLoading { get; set; }
-    public string? ErrorMessage { get; set; }
-    public string AccessCode { get; set; } = string.Empty;
+    [Parameter]
+    public EventCallback OnAccessGranted { get; set; }
+
+    private bool IsLoading { get; set; }
+    private string? ErrorMessage { get; set; }
+    private string AccessCode { get; set; } = string.Empty;
 
     private async Task OnSubmit()
     {
-        await OnCodeSubmitted.InvokeAsync(AccessCode);
+        if (string.IsNullOrWhiteSpace(AccessCode))
+            return;
+
+        IsLoading = true;
+        ErrorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var result = await AccessCodeService.ValidateAccessCodeAsync(AccessCode);
+
+            if (result.IsValid)
+            {
+                AccessCode = string.Empty;
+                ErrorMessage = null;
+                await OnAccessGranted.InvokeAsync();
+                await OnModalClosed.InvokeAsync();
+            }
+            else
+            {
+                ErrorMessage = result.ErrorMessage ?? "Invalid access code";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task OnCancel()
     {
+        if (IsLoading)
+            return;
+
         AccessCode = string.Empty;
         ErrorMessage = null;
         await OnModalClosed.InvokeAsync();
@@ -95,16 +131,6 @@
         {
             await OnSubmit();
         }
-    }
-
-    public void SetError(string message)
-    {
-        ErrorMessage = message;
-    }
-
-    public void ClearError()
-    {
-        ErrorMessage = null;
     }
 }
 
@@ -130,9 +156,9 @@
 
     .modal-dialog {
         position: relative;
-        margin: 1.75rem auto;
+        margin: 1.95rem auto;
         pointer-events: none;
-        max-width: 500px;
+        max-width: 550px;
     }
 
     .modal-content {
@@ -144,13 +170,59 @@
         background-color: #fff;
         background-clip: padding-box;
         border: 1px solid rgba(0,0,0,.2);
-        border-radius: 0.5rem;
+        border-radius: 0.55rem;
         outline: 0;
     }
 
     .modal-dialog-centered {
         display: flex;
         align-items: center;
-        min-height: calc(100% - 3.5rem);
+        min-height: calc(100% - 3.85rem);
+    }
+
+    .modal-header {
+        padding: 1.1rem 1.1rem;
+    }
+
+    .modal-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .modal-body {
+        padding: 1.1rem;
+    }
+
+    .modal-body p {
+        font-size: 1rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .modal-body .small {
+        font-size: 0.9rem !important;
+    }
+
+    .modal-body .form-label {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .modal-body .form-control {
+        font-size: 1rem;
+        padding: 0.7rem 0.85rem;
+    }
+
+    .modal-body .alert {
+        font-size: 0.95rem;
+        padding: 0.85rem;
+    }
+
+    .modal-footer {
+        padding: 0.85rem 1.1rem;
+    }
+
+    .modal-footer .btn {
+        font-size: 1rem;
+        padding: 0.55rem 1.1rem;
     }
 </style>

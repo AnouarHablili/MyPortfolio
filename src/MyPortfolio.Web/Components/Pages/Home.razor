@@ -6,22 +6,71 @@
 <PageTitle>My Portfolio - POC Showcase</PageTitle>
 
 <div class="home-page">
-    <div class="hero-section text-center mb-4">
-        <h1 class="display-4 mb-2">
-            <i class="bi bi-code-slash"></i> POC Showcase
-        </h1>
-        <p class="lead text-muted">
-            Explore interactive Proof-of-Concept demonstrations built with .NET 10 and Blazor
-        </p>
+    <div class="hero-section">
+        <span class="hero-badge">
+            <i class="bi bi-lightning-charge-fill"></i> .NET 10 & Blazor
+        </span>
+        <h1>POC Showcase</h1>
+        <p class="hero-subtitle">Interactive Proof-of-Concept demonstrations</p>
     </div>
 
     <div class="poc-section">
-        <h2 class="mb-3">
-            <i class="bi bi-grid-3x3-gap"></i> Available POCs
+        <h2>
+            <i class="bi bi-grid-3x3-gap-fill"></i> Available POCs
         </h2>
         <POCGallery POCs="@_pocs" />
     </div>
 </div>
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.25rem;
+        color: white;
+        text-align: center;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.25rem 0.7rem;
+        border-radius: 16px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+
+    .hero-section h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem 0;
+        letter-spacing: -0.5px;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .poc-section h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .poc-section h2 i {
+        color: #667eea;
+    }
+</style>
 
 @code {
     private IReadOnlyList<MyPortfolio.Shared.Models.POCMetadata> _pocs = Array.Empty<MyPortfolio.Shared.Models.POCMetadata>();

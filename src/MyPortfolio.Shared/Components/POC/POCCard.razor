@@ -2,31 +2,38 @@
 @namespace MyPortfolio.Shared.Components.POC
 @using MyPortfolio.Shared.Models
 @using MyPortfolio.Shared.Services
+@using MyPortfolio.Shared.Components.Common
 @inject AccessCodeService AccessCodeService
 
 <div class="poc-card @GetStatusClass()" @onclick="HandleClick" role="button">
     <div class="poc-card-header">
-        @if (!string.IsNullOrEmpty(POC.IconUrl))
-        {
-            <img src="@POC.IconUrl" alt="@POC.Title" class="poc-icon" />
-        }
-        else
-        {
-            <div class="poc-icon-placeholder">
-                <i class="bi bi-box" style="font-size: 2rem;"></i>
-            </div>
-        }
-        <span class="category-badge">@POC.Category</span>
-        @if (POC.Status == POCStatus.Active && !AccessCodeService.HasValidAccess())
-        {
-            <span class="lock-badge">
-                <i class="bi bi-lock-fill"></i>
+        <div class="poc-icon-wrapper">
+            @if (!string.IsNullOrEmpty(POC.IconUrl))
+            {
+                <img src="@POC.IconUrl" alt="@POC.Title" class="poc-icon" />
+            }
+            else
+            {
+                <div class="poc-icon-placeholder">
+                    <i class="bi bi-box"></i>
+                </div>
+            }
+        </div>
+        <div class="poc-badges">
+            <span class="category-badge">
+                <i class="bi bi-cpu me-1"></i>@POC.Category
             </span>
-        }
+            @if (POC.Status == POCStatus.Active && !AccessCodeService.HasValidAccess())
+            {
+                <span class="lock-badge" title="Unlock to use interactive features">
+                    <i class="bi bi-lock-fill"></i>
+                </span>
+            }
+        </div>
     </div>
 
     <div class="poc-card-body">
-        <h4 class="poc-title">@POC.Title</h4>
+        <h3 class="poc-title">@POC.Title</h3>
         <p class="poc-description">@POC.Description</p>
 
         @if (POC.Technologies.Count > 0)
@@ -34,8 +41,18 @@
             <div class="poc-technologies">
                 @foreach (var tech in POC.Technologies)
                 {
-                    <span class="badge bg-light text-dark">@tech</span>
+                    <span class="tech-badge">@tech</span>
                 }
+            </div>
+        }
+
+        @if (POC.Category == "AI")
+        {
+            <div class="ai-providers-section">
+                <div class="ai-providers-label">
+                    <i class="bi bi-stars"></i> AI Providers
+                </div>
+                <AIProviderBadges ShowNames="false" MaxDisplay="5" />
             </div>
         }
     </div>
@@ -44,38 +61,254 @@
         @switch (POC.Status)
         {
             case POCStatus.Active:
-                <button class="btn btn-primary btn-sm w-100" @onclick:stopPropagation="true" @onclick="HandleClick">
-                    <i class="bi bi-arrow-right"></i> View POC
+                <button class="btn-view-poc" @onclick:stopPropagation="true" @onclick="HandleClick">
+                    <span>Explore POC</span>
+                    <i class="bi bi-arrow-right-circle-fill"></i>
                 </button>
                 @if (!AccessCodeService.HasValidAccess())
                 {
-                    <small class="text-muted d-block mt-2">
+                    <div class="unlock-hint">
                         <i class="bi bi-info-circle"></i> Unlock to use interactive features
-                    </small>
+                    </div>
                 }
                 break;
             case POCStatus.ComingSoon:
-                <button class="btn btn-secondary btn-sm w-100" disabled>
-                    <i class="bi bi-hourglass-split"></i> Coming Soon
+                <button class="btn-coming-soon" disabled>
+                    <i class="bi bi-hourglass-split me-2"></i> Coming Soon
                 </button>
                 break;
             case POCStatus.Deprecated:
-                <span class="text-muted">This POC is no longer maintained</span>
+                <span class="deprecated-text">This POC is no longer maintained</span>
                 break;
         }
     </div>
 </div>
 
 <style>
-    .lock-badge {
+    .poc-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 18px;
+        box-shadow: 0 4px 22px rgba(0, 0, 0, 0.08);
+        padding: 1.4rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .poc-card::before {
+        content: '';
         position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(255, 193, 7, 0.9);
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .poc-card:hover {
+        transform: translateY(-7px);
+        box-shadow: 0 14px 44px rgba(102, 126, 234, 0.22);
+    }
+
+    .poc-card:hover::before {
+        opacity: 1;
+    }
+
+    .poc-card.coming-soon {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .poc-card.coming-soon:hover {
+        transform: none;
+        box-shadow: 0 4px 22px rgba(0, 0, 0, 0.08);
+    }
+
+    .poc-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 0.85rem;
+    }
+
+    .poc-icon-wrapper {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 14px rgba(102, 126, 234, 0.3);
+    }
+
+    .poc-icon {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        filter: brightness(0) invert(1);
+    }
+
+    .poc-icon-placeholder {
+        font-size: 1.4rem;
+        color: white;
+    }
+
+    .poc-badges {
+        display: flex;
+        gap: 0.45rem;
+        align-items: center;
+    }
+
+    .category-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.7rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 18px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        box-shadow: 0 2px 9px rgba(102, 126, 234, 0.3);
+    }
+
+    .lock-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 29px;
+        height: 29px;
+        background: #ffc107;
         color: #000;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.8rem;
+        border-radius: 50%;
+        font-size: 0.85rem;
+        box-shadow: 0 2px 9px rgba(255, 193, 7, 0.4);
+    }
+
+    .poc-card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .poc-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.55rem;
+        color: #1a1a2e;
+        line-height: 1.3;
+    }
+
+    .poc-description {
+        color: #4a5568;
+        font-size: 1rem;
+        line-height: 1.55;
+        margin-bottom: 0.85rem;
+    }
+
+    .poc-technologies {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .tech-badge {
+        display: inline-block;
+        padding: 0.3rem 0.55rem;
+        background: #e9ecef;
+        color: #495057;
+        border-radius: 7px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .ai-providers-section {
+        padding-top: 0.85rem;
+        border-top: 1px solid #e9ecef;
+        margin-top: auto;
+    }
+
+    .ai-providers-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 0.55rem;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .poc-card-footer {
+        margin-top: 0.85rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .btn-view-poc {
+        width: 100%;
+        padding: 0.7rem 1.1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 11px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.55rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 17px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-view-poc:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 22px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-view-poc i {
+        font-size: 1.1rem;
+        transition: transform 0.3s ease;
+    }
+
+    .btn-view-poc:hover i {
+        transform: translateX(4px);
+    }
+
+    .btn-coming-soon {
+        width: 100%;
+        padding: 0.7rem 1.1rem;
+        background: #e9ecef;
+        color: #6c757d;
+        border: none;
+        border-radius: 11px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: not-allowed;
+    }
+
+    .unlock-hint {
+        margin-top: 0.55rem;
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+    }
+
+    .deprecated-text {
+        color: #dc3545;
+        font-size: 0.95rem;
     }
 </style>
 

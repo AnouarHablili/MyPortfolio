@@ -1,0 +1,101 @@
+@namespace MyPortfolio.Shared.Components.Common
+@using MyPortfolio.Shared.Models
+
+<div class="ai-provider-badges">
+    @foreach (var provider in AIProviders.All.Take(MaxDisplay))
+    {
+        <span class="ai-badge @(provider.IsEnabled ? "enabled" : "disabled")"
+              title="@GetTooltip(provider)"
+              data-bs-toggle="tooltip"
+              data-bs-placement="top">
+            <i class="bi @provider.IconClass"></i>
+            @if (ShowNames)
+            {
+                <span class="badge-text">@provider.Name</span>
+            }
+            @if (!provider.IsEnabled)
+            {
+                <i class="bi bi-lock-fill lock-icon"></i>
+            }
+            @if (provider.IsEnabled)
+            {
+                <i class="bi bi-check-circle-fill check-icon"></i>
+            }
+        </span>
+    }
+</div>
+
+<style>
+    .ai-provider-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        align-items: center;
+    }
+
+    .ai-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.55rem;
+        border-radius: 7px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: default;
+        position: relative;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .ai-badge.enabled {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 2px 7px rgba(102, 126, 234, 0.25);
+    }
+
+    .ai-badge.disabled {
+        background: #f1f3f4;
+        color: #9aa0a6;
+        border-color: #e8eaed;
+    }
+
+    .ai-badge .lock-icon {
+        font-size: 0.7rem;
+        opacity: 0.8;
+    }
+
+    .ai-badge .check-icon {
+        font-size: 0.75rem;
+        color: #4ade80;
+    }
+
+    .ai-badge:hover {
+        transform: translateY(-1px);
+    }
+
+    .badge-text {
+        white-space: nowrap;
+    }
+</style>
+
+@code {
+    /// <summary>
+    /// Maximum number of provider badges to display before showing "+N more"
+    /// </summary>
+    [Parameter]
+    public int MaxDisplay { get; set; } = 5;
+
+    /// <summary>
+    /// Whether to show provider names alongside icons
+    /// </summary>
+    [Parameter]
+    public bool ShowNames { get; set; } = false;
+
+    private string GetTooltip(AIProvider provider)
+    {
+        if (!provider.IsEnabled)
+            return $"{provider.Name} - {provider.DisabledReason}";
+        
+        return $"{provider.Name} - Active";
+    }
+}

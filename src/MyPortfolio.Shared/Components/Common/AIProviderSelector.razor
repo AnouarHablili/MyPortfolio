@@ -1,0 +1,164 @@
+@namespace MyPortfolio.Shared.Components.Common
+@using MyPortfolio.Shared.Models
+
+<div class="ai-provider-selector">
+    <label class="form-label">
+        <i class="bi bi-cpu"></i> AI Provider
+    </label>
+    <div class="provider-options">
+        @foreach (var provider in AIProviders.All)
+        {
+            <div class="provider-option @(provider.Id == SelectedProviderId ? "selected" : "") @(!provider.IsEnabled ? "disabled" : "")"
+                 @onclick="() => SelectProvider(provider)"
+                 title="@GetTooltip(provider)">
+                <div class="provider-icon">
+                    <i class="bi @provider.IconClass"></i>
+                </div>
+                <div class="provider-info">
+                    <span class="provider-name">@provider.Name</span>
+                    @if (!provider.IsEnabled)
+                    {
+                        <span class="badge bg-secondary ms-2">
+                            <i class="bi bi-lock-fill"></i> Unavailable
+                        </span>
+                    }
+                    else if (provider.Id == SelectedProviderId)
+                    {
+                        <span class="badge bg-success ms-2">
+                            <i class="bi bi-check-circle-fill"></i> Active
+                        </span>
+                    }
+                </div>
+                @if (!provider.IsEnabled)
+                {
+                    <div class="provider-disabled-overlay" data-bs-toggle="tooltip" data-bs-placement="top" title="@provider.DisabledReason">
+                        <i class="bi bi-info-circle"></i>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <small class="text-muted mt-2 d-block">
+        <i class="bi bi-info-circle"></i> Some providers are disabled to manage API costs. 
+        <a href="https://github.com/AnouarHablili/MyPortfolio" target="_blank">View source code</a> to see implementations.
+    </small>
+</div>
+
+<style>
+    .ai-provider-selector {
+        margin-bottom: 1.65rem;
+    }
+
+    .form-label {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.55rem;
+    }
+
+    .provider-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.85rem;
+    }
+
+    .provider-option {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.85rem 1.1rem;
+        border: 2px solid #dee2e6;
+        border-radius: 0.55rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        background: #fff;
+        min-width: 220px;
+    }
+
+    .provider-option:hover:not(.disabled) {
+        border-color: #0d6efd;
+        background: #f8f9fa;
+    }
+
+    .provider-option.selected {
+        border-color: #0d6efd;
+        background: #e7f1ff;
+    }
+
+    .provider-option.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background: #f8f9fa;
+    }
+
+    .provider-icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #e9ecef;
+        font-size: 1.4rem;
+    }
+
+    .provider-option.selected .provider-icon {
+        background: #0d6efd;
+        color: white;
+    }
+
+    .provider-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .provider-name {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .provider-disabled-overlay {
+        position: absolute;
+        top: 0.55rem;
+        right: 0.55rem;
+        color: #6c757d;
+        cursor: help;
+        font-size: 1rem;
+    }
+
+    small {
+        font-size: 0.9rem !important;
+    }
+
+    @@media (max-width: 768px) {
+        .provider-option {
+            min-width: 100%;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public string SelectedProviderId { get; set; } = AIProviders.Gemini.Id;
+
+    [Parameter]
+    public EventCallback<AIProvider> OnProviderChanged { get; set; }
+
+    private async Task SelectProvider(AIProvider provider)
+    {
+        if (!provider.IsEnabled)
+            return;
+
+        SelectedProviderId = provider.Id;
+        await OnProviderChanged.InvokeAsync(provider);
+    }
+
+    private string GetTooltip(AIProvider provider)
+    {
+        if (!provider.IsEnabled)
+            return provider.DisabledReason ?? "This provider is currently unavailable";
+        
+        return provider.Description ?? provider.Name;
+    }
+}

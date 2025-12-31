@@ -16,7 +16,18 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseUrls("http://0.0.0.0:8080");
+// Configure listening URLs based on environment
+if (!builder.Environment.IsDevelopment())
+{
+    // Production: Fly.io expects HTTP on port 8080 internally (handles HTTPS at edge)
+    builder.WebHost.UseUrls("http://0.0.0.0:8080");
+}
+else
+{
+    // Development: Use HTTP only - simpler and avoids certificate issues
+    // The HttpClient will also use HTTP in development
+    builder.WebHost.UseUrls("http://localhost:5191");
+}
 
 // Configure forwarded headers for Fly.io proxy (needed for WebSocket support)
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -62,15 +73,15 @@ if (accessCodeOptions != null)
 // Register HttpClient for server-side services
 builder.Services.AddHttpClient("LocalApi", (sp, client) =>
 {
-    // For server-side Blazor, we can use relative URLs or determine the base URL from the request context
-    // In production, we'll use the app's own base URL
     if (builder.Environment.IsDevelopment())
     {
-        client.BaseAddress = new Uri("https://localhost:7024/");
+        // Development: Use HTTP for local API calls to match server configuration
+        client.BaseAddress = new Uri("http://localhost:5191/");
     }
     else
     {
-        // In production, use http://localhost:8080 since we're calling our own API from within the container
+        // Production: Use HTTP localhost since we're calling our own API from within the container
+        // Fly.io handles HTTPS at the edge/proxy level
         client.BaseAddress = new Uri("http://localhost:8080/");
     }
 });

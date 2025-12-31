@@ -65,10 +65,10 @@ public class POCService
         {
             Id = "prioritizer",
             Title = "AI Task Prioritizer",
-            Description = "Powered by Google Gemini 2.5 Flash. Enter a high-level goal and get intelligent task breakdown with reasoning chains.",
+            Description = "Transform your goals into actionable plans. Enter any objective and get an intelligent, prioritized task breakdown powered by AI.",
             Route = "/poc/prioritizer",
             IconUrl = "/images/poc-icons/prioritizer.svg",
-            Technologies = new[] { "Gemini API", "C#", "Blazor", "ASP.NET Core" },
+            Technologies = new[] { "AI", "C#", "Blazor", "ASP.NET Core" },
             Category = "AI",
             Status = POCStatus.Active,
             DisplayOrder = 1,

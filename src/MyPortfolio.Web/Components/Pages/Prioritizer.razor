@@ -15,34 +15,48 @@
     }
     else
     {
-        <div class="poc-header mb-4">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="/">Home</a>
-                    </li>
-                    <li class="breadcrumb-item active" aria-current="page">@_pocMetadata.Title</li>
-                </ol>
-            </nav>
-            
-            <div class="poc-metadata mb-3">
-                <h1>@_pocMetadata.Title</h1>
-                <p class="text-muted">@_pocMetadata.Description</p>
-                @if (_pocMetadata.Technologies.Count > 0)
-                {
-                    <div class="technologies mb-3">
-                        @foreach (var tech in _pocMetadata.Technologies)
-                        {
-                            <span class="badge bg-secondary me-2">@tech</span>
-                        }
-                    </div>
-                }
-            </div>
-        </div>
+        <nav aria-label="breadcrumb" class="breadcrumb-nav">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="/"><i class="bi bi-house-door"></i> Home</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">@_pocMetadata.Title</li>
+            </ol>
+        </nav>
 
         <PrioritizerView />
     }
 </div>
+
+<style>
+    .prioritizer-page {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .breadcrumb-nav {
+        margin-bottom: 1rem;
+    }
+
+    .breadcrumb {
+        font-size: 0.85rem;
+        background: transparent;
+        padding: 0;
+    }
+
+    .breadcrumb-item a {
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        color: #6c757d;
+    }
+</style>
 
 @code {
     private POCMetadata? _pocMetadata;
