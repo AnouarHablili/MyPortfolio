@@ -1,4 +1,5 @@
 using MyPortfolio.Core.Extensions;
+using MyPortfolio.Core.Features.RAG.Extensions;
 using MyPortfolio.Shared.Configuration;
 using MyPortfolio.Shared.Services;
 using MyPortfolio.Shared.ViewModels;
@@ -97,6 +98,9 @@ builder.Services.AddScoped(sp =>
 // Only Gemini is currently configured with an API key - others are ready for future use
 builder.Services.AddAIServices(builder.Configuration);
 
+// Register RAG Services (Session management, chunking, embedding, vector store, strategies)
+builder.Services.AddRAGServices(builder.Configuration);
+
 // Register JWT Token Service
 builder.Services.AddSingleton<JwtTokenService>();
 
@@ -109,6 +113,7 @@ builder.Services.AddScoped<POCService>();
 builder.Services.AddScoped<AccessCodeService>();
 builder.Services.AddScoped<NavigationService>();
 builder.Services.AddScoped<PrioritizerViewModel>();
+builder.Services.AddScoped<RAGViewModel>();
 builder.Services.AddSingleton<ExportService>();
 
 // Add Health Checks
@@ -193,6 +198,7 @@ app.MapHealthChecks("/health/live", new HealthCheckOptions
 // Map API Endpoints
 app.MapAccessCodeEndpoints();
 app.MapPrioritizerEndpoints();
+app.MapRAGEndpoints();
 
 // Map OpenAPI/Swagger
 if (app.Environment.IsDevelopment())

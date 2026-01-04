@@ -1,0 +1,68 @@
+@page "/poc/rag"
+@using MyPortfolio.Shared.Components.RAG
+@using MyPortfolio.Shared.Services
+@using MyPortfolio.Shared.Models
+@inject POCService POCService
+
+<PageTitle>RAG System - POC</PageTitle>
+
+<div class="rag-page">
+    @if (_pocMetadata == null)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> POC not found
+        </div>
+    }
+    else
+    {
+        <nav aria-label="breadcrumb" class="breadcrumb-nav">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="/"><i class="bi bi-house-door"></i> Home</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">@_pocMetadata.Title</li>
+            </ol>
+        </nav>
+
+        <RAGView />
+    }
+</div>
+
+<style>
+    .rag-page {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .breadcrumb-nav {
+        margin-bottom: 1rem;
+    }
+
+    .breadcrumb {
+        font-size: 0.85rem;
+        background: transparent;
+        padding: 0;
+    }
+
+    .breadcrumb-item a {
+        color: #10b981;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb-item.active {
+        color: #6c757d;
+    }
+</style>
+
+@code {
+    private POCMetadata? _pocMetadata;
+
+    protected override void OnInitialized()
+    {
+        _pocMetadata = POCService.GetPOCById("rag");
+    }
+}

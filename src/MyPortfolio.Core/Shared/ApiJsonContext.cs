@@ -3,6 +3,7 @@
 using System.Text.Json.Serialization;
 using MyPortfolio.Core.Features.Prioritizer.Models;
 using MyPortfolio.Core.Features.Prioritizer.Services.Models;
+using MyPortfolio.Core.Features.RAG.Models;
 
 namespace MyPortfolio.Core.Shared;
 
@@ -17,6 +18,23 @@ namespace MyPortfolio.Core.Shared;
 [JsonSerializable(typeof(PrioritizationResponse))]    // Our output model
 [JsonSerializable(typeof(GeminiRequest))]           // The JSON we send to the API
 [JsonSerializable(typeof(GeminiStreamResponse))]    // The chunks we receive from the API
+// RAG POC models
+[JsonSerializable(typeof(CreateSessionRequest))]
+[JsonSerializable(typeof(CreateSessionResponse))]
+[JsonSerializable(typeof(IngestDocumentRequest))]
+[JsonSerializable(typeof(IngestProgressUpdate))]
+[JsonSerializable(typeof(IngestDocumentResponse))]
+[JsonSerializable(typeof(RAGQueryRequest))]
+[JsonSerializable(typeof(RAGStreamChunk))]
+[JsonSerializable(typeof(RAGResponse))]
+[JsonSerializable(typeof(RAGMetrics))]
+[JsonSerializable(typeof(SessionStatsResponse))]
+[JsonSerializable(typeof(Citation))]
+[JsonSerializable(typeof(RetrievalResult))]
+[JsonSerializable(typeof(DocumentSummary))]
+[JsonSerializable(typeof(IReadOnlyList<RetrievalResult>))]
+[JsonSerializable(typeof(IReadOnlyList<Citation>))]
+[JsonSerializable(typeof(IReadOnlyList<DocumentSummary>))]
 internal partial class ApiJsonContext : JsonSerializerContext
 {
 }

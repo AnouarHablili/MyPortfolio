@@ -1,0 +1,654 @@
+@namespace MyPortfolio.Shared.Components.RAG
+@using MyPortfolio.Shared.ViewModels
+@using MyPortfolio.Shared.Services
+@using MyPortfolio.Core.Features.RAG.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
+@implements IDisposable
+@inject RAGViewModel ViewModel
+@inject AccessCodeService AccessCodeService
+@inject IJSRuntime JSRuntime
+
+<div class="rag-view">
+    <!-- Hero Header -->
+    <div class="rag-hero">
+        <span class="hero-badge"><i class="bi bi-database"></i> Backend Engineering Showcase</span>
+        <h1>RAG System</h1>
+        <p class="hero-subtitle">Retrieval-Augmented Generation with <span class="highlight">advanced optimizations</span></p>
+        @if (!AccessCodeService.HasValidAccess())
+        {
+            <div class="unlock-banner">
+                <i class="bi bi-lock-fill"></i>
+                <span><strong>Unlock Required</strong> — Click "Unlock Features" in the menu</span>
+            </div>
+        }
+    </div>
+
+    <!-- Skills Showcase Banner -->
+    <div class="skills-banner">
+        <div class="skill-item"><i class="bi bi-layers"></i><span>Channel&lt;T&gt;</span></div>
+        <div class="skill-item"><i class="bi bi-lightning"></i><span>SIMD</span></div>
+        <div class="skill-item"><i class="bi bi-arrow-repeat"></i><span>Parallel</span></div>
+        <div class="skill-item"><i class="bi bi-hdd-stack"></i><span>Caching</span></div>
+    </div>
+
+    <!-- Error Display - moved to top for better visibility -->
+    @if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
+    {
+        <div class="alert-message error">
+            <div class="alert-content">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>@ViewModel.ErrorMessage</span>
+            </div>
+            <button class="alert-close" @onclick="ClearError">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    }
+
+    @if (!ViewModel.HasActiveSession)
+    {
+        <!-- Session Creation -->
+        <div class="session-section">
+            <div class="session-icon">
+                <i class="bi bi-rocket-takeoff"></i>
+            </div>
+            <h3>Start Your RAG Session</h3>
+            <p>Create an in-memory session to explore document intelligence with RAG.</p>
+            <div class="session-features">
+                <div class="feature-item">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Up to <strong>@ViewModel.MaxDocuments documents</strong></span>
+                </div>
+                <div class="feature-item">
+                    <i class="bi bi-hdd"></i>
+                    <span>Max <strong>@(ViewModel.MaxFileSizeKB > 0 ? ViewModel.MaxFileSizeKB : 100) KB</strong> per file</span>
+                </div>
+                <div class="feature-item">
+                    <i class="bi bi-clock-history"></i>
+                    <span><strong>15 min</strong> session lifetime</span>
+                </div>
+            </div>
+            <button class="create-session-btn" @onclick="CreateSessionAsync" 
+                    disabled="@(ViewModel.IsCreatingSession || !AccessCodeService.HasValidAccess())">
+                @if (ViewModel.IsCreatingSession)
+                {
+                    <span class="spinner-border spinner-border-sm"></span>
+                    <span>Creating Session...</span>
+                }
+                else
+                {
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Create Session</span>
+                }
+            </button>
+        </div>
+    }
+    else
+    {
+        <!-- Active Session -->
+        <div class="active-session">
+            <!-- Session Info Bar -->
+            <div class="session-info-bar">
+                <div class="session-details">
+                    <span class="session-label">
+                        <i class="bi bi-key-fill"></i>
+                        Session
+                    </span>
+                    <code class="session-code">@ViewModel.SessionId</code>
+                </div>
+                <div class="session-metrics">
+                    <div class="metric-badge">
+                        <i class="bi bi-file-earmark"></i>
+                        <span>@ViewModel.Documents.Count/@ViewModel.MaxDocuments</span>
+                    </div>
+                    <div class="metric-badge">
+                        <i class="bi bi-puzzle"></i>
+                        <span>@ViewModel.TotalChunks chunks</span>
+                    </div>
+                </div>
+                <button class="end-session-btn" @onclick="ResetSession" title="End Session">
+                    <i class="bi bi-x-circle"></i>
+                    <span>End</span>
+                </button>
+            </div>
+
+            <!-- Step 1: Upload Documents -->
+            <div class="step-card @(ViewModel.Documents.Count == 0 ? "active" : "completed")">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <h4>
+                        <i class="bi bi-cloud-upload"></i>
+                        Upload Documents
+                    </h4>
+                    @if (ViewModel.Documents.Count > 0)
+                    {
+                        <span class="step-badge success">
+                            <i class="bi bi-check-circle-fill"></i>
+                            @ViewModel.Documents.Count uploaded
+                        </span>
+                    }
+                </div>
+                
+                @if (ViewModel.Documents.Count > 0)
+                {
+                    <div class="uploaded-docs-list">
+                        @foreach (var doc in ViewModel.Documents)
+                        {
+                            <div class="doc-card">
+                                <i class="bi bi-file-text-fill doc-icon"></i>
+                                <div class="doc-info">
+                                    <span class="doc-name">@doc.FileName</span>
+                                    <span class="doc-meta">@(doc.CharacterCount / 1024) KB • @doc.UploadedAt.ToString("HH:mm")</span>
+                                </div>
+                                <i class="bi bi-check-circle-fill doc-status"></i>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (ViewModel.CanUpload)
+                {
+                    <div class="upload-zone" @ondragover:preventDefault @ondragover="HandleDragOver" @dragleave="HandleDragLeave" @ondrop="HandleFileDrop">
+                        <InputFile OnChange="HandleFileSelected" accept=".txt,.md" id="fileInput" />
+                        <label for="fileInput" class="upload-label">
+                            <i class="bi bi-cloud-arrow-up-fill"></i>
+                            <span class="upload-title">Drop your file here or click to browse</span>
+                            <span class="upload-hint">
+                                <i class="bi bi-info-circle"></i>
+                                Text (.txt) or Markdown (.md) files • Max @ViewModel.MaxFileSizeKB KB
+                            </span>
+                        </label>
+                    </div>
+                }
+                else if (!ViewModel.CanUpload && !ViewModel.IsUploading && ViewModel.Documents.Count >= ViewModel.MaxDocuments)
+                {
+                    <div class="info-message">
+                        <i class="bi bi-info-circle"></i>
+                        <span>Document limit reached. End session to start fresh.</span>
+                    </div>
+                }
+
+                @if (ViewModel.IsUploading)
+                {
+                    <div class="upload-progress-card">
+                        <div class="progress-header">
+                            <span class="progress-title">
+                                <i class="bi bi-hourglass-split spinning-icon"></i>
+                                Processing document...
+                            </span>
+                            <span class="progress-percentage">@((int)ViewModel.UploadPercentComplete)%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill @(ViewModel.UploadPercentComplete > 0 ? "active" : "")" 
+                                 style="width: @(ViewModel.UploadPercentComplete > 0 ? ViewModel.UploadPercentComplete : 100)%"></div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(ViewModel.UploadProgress))
+                        {
+                            <span class="progress-message">
+                                <i class="bi bi-info-circle"></i>
+                                @ViewModel.UploadProgress
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Step 2: Select Strategy -->
+            <div class="step-card @(ViewModel.TotalChunks > 0 && string.IsNullOrEmpty(ViewModel.StreamingResponse) ? "active" : (ViewModel.TotalChunks > 0 ? "completed" : ""))">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <h4>
+                        <i class="bi bi-diagram-3"></i>
+                        Choose RAG Strategy
+                    </h4>
+                    <button class="help-btn" @onclick="ToggleStrategyHelp" title="Learn about strategies">
+                        <i class="bi bi-question-circle"></i>
+                    </button>
+                </div>
+
+                <div class="strategy-cards">
+                    @foreach (var strategy in Strategies)
+                    {
+                        <div class="strategy-card-wrapper">
+                            <button class="strategy-card @(strategy.Value == ViewModel.SelectedStrategy ? "selected" : "")"
+                                    @onclick="() => SelectStrategy(strategy.Value)"
+                                    disabled="@(ViewModel.TotalChunks == 0)">
+                                <div class="strategy-icon">
+                                    <i class="bi @strategy.Icon"></i>
+                                </div>
+                                <div class="strategy-content">
+                                    <span class="strategy-title">@strategy.Name</span>
+                                    <span class="strategy-description">@strategy.Description</span>
+                                </div>
+                                @if (strategy.Value == ViewModel.SelectedStrategy)
+                                {
+                                    <i class="bi bi-check-circle-fill strategy-check"></i>
+                                }
+                            </button>
+                            <div class="strategy-details">
+                                <p class="strategy-explanation">@strategy.DetailedExplanation</p>
+                                <div class="strategy-best-for">
+                                    <i class="bi bi-star-fill"></i>
+                                    <span><strong>Best for:</strong> @strategy.BestFor</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (_showStrategyHelp)
+                {
+                    <div class="strategy-help">
+                        <div class="help-item">
+                            <strong>Naive RAG</strong>
+                            <p>Direct vector similarity search. Best for: straightforward questions with clear keyword matches.</p>
+                        </div>
+                        <div class="help-item">
+                            <strong>Semantic RAG</strong>
+                            <p>Expands queries with synonyms and related terms, then reranks results. Best for: complex queries needing broader context.</p>
+                        </div>
+                        <div class="help-item">
+                            <strong>HyDE RAG</strong>
+                            <p>Generates a hypothetical answer first, then searches using it. Best for: questions where the answer style differs from query style.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Step 3: Ask Questions -->
+            <div class="step-card @(!string.IsNullOrEmpty(ViewModel.StreamingResponse) || ViewModel.IsQuerying ? "active" : "")">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <h4>
+                        <i class="bi bi-chat-dots"></i>
+                        Ask Questions
+                    </h4>
+                </div>
+
+                <div class="query-box">
+                    <textarea class="query-input" 
+                           rows="3"
+                           placeholder="What would you like to know about your documents? (Press Ctrl+Enter to send)"
+                           @bind="ViewModel.Query" 
+                           @bind:event="oninput" 
+                           @onkeydown="HandleKeyDown"
+                           disabled="@(!ViewModel.CanQuery || ViewModel.IsQuerying)"></textarea>
+                    <button class="query-submit-btn" 
+                            @onclick="QueryAsync"
+                            disabled="@(!ViewModel.CanQuery || ViewModel.IsQuerying || string.IsNullOrWhiteSpace(ViewModel.Query))">
+                        @if (ViewModel.IsQuerying)
+                        {
+                            <span class="spinner-border spinner-border-sm"></span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-send-fill"></i>
+                        }
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(ViewModel.StreamingResponse) || ViewModel.IsQuerying)
+                {
+                    <div class="response-card">
+                        <div class="response-header">
+                            <span class="response-title">
+                                <i class="bi bi-stars"></i>
+                                AI Response
+                            </span>
+                            <span class="strategy-tag">@ViewModel.SelectedStrategy</span>
+                        </div>
+                        
+                        <div class="response-body">
+                            @if (string.IsNullOrEmpty(ViewModel.StreamingResponse) && ViewModel.IsQuerying)
+                            {
+                                <div class="typing-animation">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="response-text">@((MarkupString)FormatResponseAsHtml(ViewModel.StreamingResponse))</div>
+                            }
+                        </div>
+
+                        @if (ViewModel.Citations.Count > 0)
+                        {
+                            <div class="citations-panel">
+                                <h5 class="citations-title">
+                                    <i class="bi bi-link-45deg"></i>
+                                    Sources (@ViewModel.Citations.Count)
+                                </h5>
+                                <div class="citations-list">
+                                    @foreach (var citation in ViewModel.Citations)
+                                    {
+                                        <div class="citation-card">
+                                            <div class="citation-header">
+                                                <span class="citation-source">
+                                                    <i class="bi bi-file-earmark-text"></i>
+                                                    @citation.DocumentName
+                                                </span>
+                                                <span class="citation-relevance">@(citation.RelevanceScore.ToString("P0"))</span>
+                                            </div>
+                                            <p class="citation-text">@citation.ChunkPreview</p>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        @if (ViewModel.LastMetrics != null)
+                        {
+                            <div class="metrics-panel">
+                                <h5 class="metrics-title">
+                                    <i class="bi bi-speedometer2"></i>
+                                    Performance Metrics
+                                </h5>
+                                <div class="metrics-row">
+                                    <div class="metric-item metric-retrieval">
+                                        <div class="metric-icon">
+                                            <i class="bi bi-search"></i>
+                                        </div>
+                                        <span class="metric-value">@(ViewModel.LastMetrics.RetrievalTimeMs)</span>
+                                        <span class="metric-label">ms retrieval</span>
+                                    </div>
+                                    <div class="metric-item metric-generation">
+                                        <div class="metric-icon">
+                                            <i class="bi bi-cpu"></i>
+                                        </div>
+                                        <span class="metric-value">@(ViewModel.LastMetrics.GenerationTimeMs)</span>
+                                        <span class="metric-label">ms generation</span>
+                                    </div>
+                                    <div class="metric-item metric-chunks">
+                                        <div class="metric-icon">
+                                            <i class="bi bi-collection"></i>
+                                        </div>
+                                        <span class="metric-value">@(ViewModel.LastMetrics.ChunksRetrieved)</span>
+                                        <span class="metric-label">chunks used</span>
+                                    </div>
+                                    <div class="metric-item metric-total">
+                                        <div class="metric-icon">
+                                            <i class="bi bi-stopwatch"></i>
+                                        </div>
+                                        <span class="metric-value">@(ViewModel.LastMetrics.TotalTimeMs)</span>
+                                        <span class="metric-label">ms total</span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private CancellationTokenSource? _cts;
+    private bool _showStrategyHelp = false;
+    private bool _isDragging = false;
+
+    private static readonly StrategyInfo[] Strategies = new[]
+    {
+        new StrategyInfo(
+            RAGStrategy.Naive, 
+            "Naive", 
+            "bi-search", 
+            "Direct similarity search",
+            "Direct vector similarity search. Best for: straightforward questions with clear keyword matches.",
+            "Best for: straightforward questions with clear keyword matches."),
+        new StrategyInfo(
+            RAGStrategy.Semantic, 
+            "Semantic", 
+            "bi-diagram-2-fill", 
+            "Query expansion + reranking",
+            "Expands queries with synonyms and related terms, then reranks results. Best for: complex queries needing broader context.",
+            "Best for: complex queries needing broader context."),
+        new StrategyInfo(
+            RAGStrategy.HyDE, 
+            "HyDE", 
+            "bi-lightbulb-fill", 
+            "Hypothetical document embeddings",
+            "Generates a hypothetical answer first, then searches using it. Best for: questions where the answer style differs from query style.",
+            "Best for: questions where the answer style differs from query style.")
+    };
+
+    private static readonly string[] AllowedExtensions = new[] { ".txt", ".md" };
+
+    protected override void OnInitialized()
+    {
+        ViewModel.OnStateChanged += StateHasChanged;
+        AccessCodeService.OnAccessStateChanged += StateHasChanged;
+    }
+
+    private async Task CreateSessionAsync()
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        await ViewModel.CreateSessionAsync(_cts.Token);
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        // Validate file type
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (!AllowedExtensions.Contains(extension))
+        {
+            ViewModel.ErrorMessage = $"Invalid file type. Please upload .txt or .md files only.";
+            StateHasChanged();
+            return;
+        }
+
+        // Validate file size
+        if (file.Size > ViewModel.MaxFileSizeKB * 1024)
+        {
+            ViewModel.ErrorMessage = $"File too large ({file.Size / 1024} KB). Maximum size is {ViewModel.MaxFileSizeKB} KB.";
+            StateHasChanged();
+            return;
+        }
+
+        // Validate file is not empty
+        if (file.Size == 0)
+        {
+            ViewModel.ErrorMessage = "Empty file. Please upload a file with content.";
+            StateHasChanged();
+            return;
+        }
+
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+
+        try
+        {
+            using var reader = new StreamReader(file.OpenReadStream(ViewModel.MaxFileSizeKB * 1024));
+            var content = await reader.ReadToEndAsync();
+            
+            // Validate content is not just whitespace
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                ViewModel.ErrorMessage = "File contains no readable text. Please upload a file with actual content.";
+                StateHasChanged();
+                return;
+            }
+            
+            await ViewModel.UploadDocumentAsync(file.Name, content, _cts.Token);
+        }
+        catch (Exception ex)
+        {
+            ViewModel.ErrorMessage = $"Error reading file: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    private void HandleDragOver(DragEventArgs e)
+    {
+        _isDragging = true;
+    }
+
+    private void HandleDragLeave(DragEventArgs e)
+    {
+        _isDragging = false;
+    }
+
+    private void HandleFileDrop(DragEventArgs e)
+    {
+        _isDragging = false;
+    }
+
+    private void SelectStrategy(RAGStrategy strategy)
+    {
+        ViewModel.SelectedStrategy = strategy;
+        StateHasChanged();
+    }
+
+    private void ToggleStrategyHelp()
+    {
+        _showStrategyHelp = !_showStrategyHelp;
+        StateHasChanged();
+    }
+
+    private async Task QueryAsync()
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        await ViewModel.QueryAsync(_cts.Token);
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && ViewModel.CanQuery && !string.IsNullOrWhiteSpace(ViewModel.Query))
+        {
+            await QueryAsync();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        // Ctrl+Enter or Cmd+Enter to submit
+        if (e.Key == "Enter" && (e.CtrlKey || e.MetaKey) && ViewModel.CanQuery && !string.IsNullOrWhiteSpace(ViewModel.Query))
+        {
+            await QueryAsync();
+        }
+    }
+
+    private void ClearError()
+    {
+        ViewModel.ErrorMessage = null;
+        StateHasChanged();
+    }
+
+    private void ResetSession()
+    {
+        ViewModel.Reset();
+        _showStrategyHelp = false;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ViewModel.OnStateChanged -= StateHasChanged;
+        AccessCodeService.OnAccessStateChanged -= StateHasChanged;
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+
+    private record StrategyInfo(RAGStrategy Value, string Name, string Icon, string Description, string DetailedExplanation, string BestFor);
+
+    private string FormatResponseAsHtml(string markdown)
+    {
+        if (string.IsNullOrWhiteSpace(markdown))
+            return string.Empty;
+
+        var html = System.Security.SecurityElement.Escape(markdown);
+        
+        // Headers (## Header)
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, 
+            @"^## (.+)$", 
+            "<h3 class='response-heading'>$1</h3>", 
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        
+        // Headers (### Header)
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, 
+            @"^### (.+)$", 
+            "<h4 class='response-subheading'>$1</h4>", 
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        
+        // Bold text (**text**)
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, 
+            @"\*\*(.+?)\*\*", 
+            "<strong>$1</strong>");
+        
+        // Italic text (*text* or _text_)
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, 
+            @"\*(.+?)\*", 
+            "<em>$1</em>");
+        
+        // Inline code (`code`)
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, 
+            @"`(.+?)`", 
+            "<code>$1</code>");
+        
+        // Bullet lists (- item or * item)
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, 
+            @"^[*-] (.+)$", 
+            "<li>$1</li>", 
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        
+        // Wrap consecutive <li> in <ul>
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, 
+            @"(<li>.+?</li>(?:\r?\n<li>.+?</li>)*)", 
+            "<ul>$1</ul>", 
+            System.Text.RegularExpressions.RegexOptions.Singleline);
+        
+        // Numbered lists (1. item)
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, 
+            @"^\d+\. (.+)$", 
+            "<li>$1</li>", 
+            System.Text.RegularExpressions.RegexOptions.Multiline);
+        
+        // Wrap numbered <li> in <ol>
+        if (html.Contains("<li>") && !html.Contains("<ul>"))
+        {
+            html = System.Text.RegularExpressions.Regex.Replace(
+                html, 
+                @"(<li>.+?</li>(?:\r?\n<li>.+?</li>)*)", 
+                "<ol>$1</ol>", 
+                System.Text.RegularExpressions.RegexOptions.Singleline);
+        }
+        
+        // Paragraphs (double line breaks)
+        html = System.Text.RegularExpressions.Regex.Replace(
+            html, 
+            @"(?<!</(h3|h4|ul|ol|li)>)\r?\n\r?\n(?!<(h3|h4|ul|ol|li|p)>)", 
+            "</p><p>");
+        
+        // Wrap in paragraph if not already wrapped
+        if (!html.StartsWith("<h") && !html.StartsWith("<ul") && !html.StartsWith("<ol") && !html.StartsWith("<p"))
+            html = "<p>" + html;
+        
+        if (!html.EndsWith("</p>") && !html.EndsWith("</ul>") && !html.EndsWith("</ol>") && !html.EndsWith(">"))
+            html += "</p>";
+        
+        // Single line breaks
+        html = html.Replace("\r\n", "<br>").Replace("\n", "<br>");
+        
+        // Clean up extra breaks around block elements
+        html = System.Text.RegularExpressions.Regex.Replace(html, @"<br>\s*(</?(?:h3|h4|ul|ol|li|p)>)", "$1");
+        html = System.Text.RegularExpressions.Regex.Replace(html, @"(</?(?:h3|h4|ul|ol|li|p)>)\s*<br>", "$1");
+
+        return html;
+    }
+}

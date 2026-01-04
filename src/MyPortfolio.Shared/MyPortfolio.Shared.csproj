@@ -26,7 +26,6 @@
     <Folder Include="Components\FAQ\" />
     <Folder Include="Components\Layout\" />
     <Folder Include="Components\Testimonials\" />
-    <Folder Include="ViewModels\" />
     <Folder Include="wwwroot\images\" />
     <Folder Include="wwwroot\js\" />
   </ItemGroup>

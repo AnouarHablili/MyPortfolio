@@ -75,7 +75,19 @@ public class POCService
             ClientFacingName = "Intelligent Task Prioritization"
         });
 
-        // Placeholder for future POCs
-        // RegisterPOC(new POCMetadata { ... });
+        // Register the RAG POC
+        RegisterPOC(new POCMetadata
+        {
+            Id = "rag",
+            Title = "RAG System",
+            Description = "Backend engineering showcase: Upload documents and query them using Retrieval-Augmented Generation. Features SIMD-accelerated vector search, parallel processing pipelines, and multiple RAG strategies.",
+            Route = "/poc/rag",
+            IconUrl = "/images/poc-icons/rag.svg",
+            Technologies = new[] { "RAG", "C#", "SIMD", "Parallel Processing", "Gemini" },
+            Category = "AI",
+            Status = POCStatus.Active,
+            DisplayOrder = 2,
+            ClientFacingName = "Document Intelligence"
+        });
     }
 }
